@@ -5,7 +5,7 @@
 #define MAX_BUFF  1024 // Tamaño maximo del buffer de lectura
 #define FIELDS_TREE 3 // Cantidad de campos relevantes a leer de arboles.csv
 
-#define BUE "ON"
+
 
 /* Número de columna de Comuna, Nombre cientifico, Diametro en arboles.csv
 *  Necesariamente de menor a mayor
