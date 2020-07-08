@@ -3,6 +3,21 @@
 #include <string.h>
 #include "queryDataADT.h"
 
+static char * strDuplicate(const char * src) {
+    char * dst = malloc(strlen(src) + 1);   // Guarda espacio para el nuevo string.
+    if (dst != NULL)                        // Si hay memoria,
+      strcpy(dst, src);                     // hace la copia
+    return dst;                             // Retorna el nuevo string
+}
+
+static char * allocStringFromSize(size_t n) {
+  size_t len = snprintf (NULL, 0, "%lu", n);       // Devuelve la cantidad de caracteres del numero
+  char * ans = malloc((len + 1) * sizeof(ans[0])); // Guarda espacio para el nuevo string
+  if (ans != NULL)                                 // Si hay memoria,
+    snprintf(ans, len + 1, "%lu", n);              // Guarda como string el valor de n
+  return ans;                                      // Retorna el nuevo string
+}
+
 /* Estructura que guarda la información necesaria para Q1 y Q2
 */
 typedef struct nbhInfo {
@@ -14,7 +29,8 @@ typedef struct nbhInfo {
 // Arreglo dinámico de nbhInfo
 typedef struct nbhInfo * nbhArr;
 
-// Nodo de nbhInfo
+/* Nodo de nbhInfo
+*/
 typedef struct nbhNode {
   nbhInfo info;
   struct nbhNode * tail;
@@ -35,7 +51,7 @@ typedef struct queryDataCDT {
     nbhInfo * nbhArr;             // Arreglo de barrios ordenados alfabeticamente
     size_t arrDim;
     char currQuery;               // Flag del tipo de Query
-    char arrStatus;               // PREPARED si se actualizó el arreglo despues del último addNbh
+    char arrStatus;               // PREPARED si se actualizó el arreglo despues del último addNbh, UNPREPARED sino.
 } queryDataCDT;
 
 /* --- Queries --- */
@@ -51,6 +67,12 @@ int compareQ1(nbhInfo * info1, nbhInfo * info2){
     return strcmp(info1->name, info2->name);
 }
 
+char ** infoQ1(nbhInfo nbh) {
+  char ** ans = malloc( 2 * sizeof(ans[0]) );
+  ans[0] = strDuplicate(nbh.name);
+  ans[1] = allocStringFromSize(nbh.trees); /*CANT_DE_ARBOLES a string con sprintf*/
+  return ans;
+}
 
 queryDataADT newQueryData(void){
   return calloc(1, sizeof(queryDataCDT)); //validar NULL
@@ -145,4 +167,101 @@ void addTree(queryDataADT qd, const char * nbhName){
 
     if(index >= 0)
         (qd->nbhArr[index].trees)++;
+}
+
+// Ordena el vector siguiendo un criterio determinado de acuerdo a la query que se desee (pasandole el mismo como parametro utilizando un puntero a funcion)
+static nbhList arrayToList(nbhInfo * arr, size_t size, int (*criteria) (nbhInfo *, nbhInfo *)) {
+  int ok = 0; // no se usa en esta funcion
+  nbhList first = NULL;
+  for (size_t i = 0; i < size; i++) {
+    first = addNbhRec(first, arr + i, &ok, criteria);
+  }
+  return first;
+}
+
+//Libera la lista de la estructura
+static void freeList(nbhList first){
+  nbhList it = first;
+  while(it != NULL) {
+    nbhList aux = it->tail;
+    free(it->info.name);
+    free(it);
+    it = aux;
+  }
+}
+
+void toBegin(queryDataADT qd){
+  qd->current = qd->firstNbh;
+}
+
+void beginQuery1(queryDataADT qd){
+  freeList(qd->firstNbh);
+  // Crear la lista ordenada de acuerdo al criterio de la query1
+  qd->firstNbh = arrayToList(qd->nbhArr, qd->listDim, compareQ1);
+  // Setear iterador a head
+  toBegin(qd);
+  qd->currQuery = 1;
+}
+
+void beginQuery2(queryDataADT qd){
+  freeList(qd->firstNbh);
+  // Crear la lista ordenada de acuerdo al criterio de la query1
+  qd->firstNbh = arrayToList(qd->nbhArr, qd->listDim, compareQ2);
+  // Setear iterador a head
+  toBegin(qd);
+  qd->currQuery = 2;
+}
+
+
+int hasNext(queryDataADT qd) {
+  return qd->current != NULL;
+}
+
+
+char ** next(queryDataADT qd) {
+  char ** ans = malloc( 2 * sizeof(ans[0]) );
+  ans[0] = strDuplicate(qd->current->info.name);
+  ans[1] = allocStringFromSize(qd->current->info.population);
+  qd->current = qd->current->tail;
+  return ans;
+}
+
+
+char ** answer(queryDataADT qd, size_t * size) {
+  if(! hasNext(qd)){
+    fprintf(stderr, "Query data has not next\n");
+    exit(1); //no abortar en backend
+  }
+  char ** ans;
+  switch(qd->currQuery) {
+    case 1:
+      //BARRIO;CANT_ARBOLES
+      ans = infoQ1(qd->current->info);
+      *size = 2;
+      break;
+    case 2:
+      // BARRIO;CANT_ARBOLES/HABITANTES
+      ans = infoQ2(qd->current->info);
+      break;
+    case 3:
+      // NOMBRE_CIENTIFICO;DIAM_PROMEDIO
+      //ans = infoQ3(qd->current->info);
+      break;
+    default:
+      return NULL;
+  }
+  qd->current = qd->current->tail;
+  return ans;
+}
+
+static void freeArr(nbhArr arr, size_t size){
+  for (size_t i = 0; i < size; i++)
+    free(arr[i].name);
+  free(arr);
+}
+
+void freeQueryData(queryDataADT qd) {
+  freeList(qd->firstNbh);
+  freeArr(qd->nbhArr, qd->arrDim);
+  free(qd);
 }
