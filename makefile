@@ -1,7 +1,7 @@
 COMPILER=gcc
 OUTPUT_FILE_BUE=arbolesADTBUE
 OUTPUT_FILE_VAN=arbolesADTVAN
-FILES=main.c csv.c
+FILES=main.c csv.c queryDataADT.c
 CFLAGS=-pedantic -std=c99 -Wall -fsanitize=address
 DEBUG_COMPILER=-g -DDEBUG=1
 
