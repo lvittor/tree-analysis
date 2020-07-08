@@ -19,31 +19,53 @@
 #endif
 
 
-#define NBH_FIELDS  2 // Cantidad de campos relevantes a leer de barrio.csv
+#define FIELDS_NBH  2 // Cantidad de campos relevantes a leer de barrio.csv
 
 /* Número de columna de Nombre, Cantidad de habitantes en barrio.csv */
-size_t nbhPos[NBH_FIELDS] = {0, 1};
+size_t nbhPos[FIELDS_NBH] = {0, 1};
 enum {NBH_NAME = 0, NBH_POP};
 
 /* Función: Imprimime un vector de punteros a char mediante salida estandar */
 void printArrayOfStrings(char ** strArr, size_t size);
 
 /* Función: Permite abrir liberar la memoria del vector de strings generado por getColumns */
-void freeVec(char ** vec);
+void freeVec(char ** vec, size_t size);
 
 int main(int argc, char *argv[]) {
-    FILE * file = openCSV(argv[1]);
+    char * treePath = argv[1];
+    char * nbhPath = argv[2];
 
     char line[MAX_BUFF];
+
+    FILE * file = openCSV(nbhPath);
+    if (file == NULL) {
+        exit(1);
+    }
+
+    while(nextLine(file, line, MAX_BUFF) != NULL) {
+        char ** rowData = getColumns(line, nbhPos, FIELDS_NBH);
+        printArrayOfStrings(rowData, FIELDS_NBH);
+        // addNbh(rowData[NBH_NAME], atoi(rowData[NBH_POP])); //Buscar funcion string to unsigned
+        freeVec(rowData, FIELDS_NBH);
+    }
+
+    closeCSV(file);
+
+    file = openCSV(treePath);
+    if (file == NULL) {
+        exit(1);
+    }
 
     while(nextLine(file, line, MAX_BUFF) != NULL) {
         char ** rowData = getColumns(line, treePos, FIELDS_TREE);
         printArrayOfStrings(rowData, FIELDS_TREE);
         // addTree(rowData[NBH], rowData[SCI_NAME], atof(rowData[DIAM]));
-        freeVec(rowData);
+        // addNbh(rowData[NBH_NAME], atoi(rowData[NBH_POP]));              Buscar funcion string to unsigned
+        freeVec(rowData, FIELDS_TREE);
     }
 
     closeCSV(file);
+
     return 0;
 }
 
@@ -53,8 +75,8 @@ void printArrayOfStrings(char ** strArr, size_t size) {
     putchar('\n');
 }
 
-void freeVec(char ** vec){
-  for(int i=0; i<FIELDS_TREE; i++)
+void freeVec(char ** vec, size_t size){
+  for(int i=0; i<size; i++)
       free(vec[i]);
   free(vec);
 }
