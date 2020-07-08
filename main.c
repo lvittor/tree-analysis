@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "csv.h"
+#include "queryDataADT.h"
 
 #define MAX_BUFF  1024 // Tamaño maximo del buffer de lectura
 #define FIELDS_TREE 3 // Cantidad de campos relevantes a leer de arboles.csv
@@ -12,10 +13,10 @@
 */
 #ifdef BUE  // Determina si esta en modo BUE o VAN
     size_t treePos[FIELDS_TREE] = {2, 7, 11};
-    enum {NBH = 0, SCI_NAME, DIAM};
+    enum {TREE_NBH = 0, TREE_SCI_NAME, TREE_DIAM};
 #else
     size_t treePos[FIELDS_TREE] = {6, 12, 15};
-    enum {SCI_NAME = 0, NBH, DIAM};
+    enum {TREE_SCI_NAME = 0, TREE_NBH, TREE_DIAM};
 #endif
 
 
@@ -36,20 +37,32 @@ int main(int argc, char *argv[]) {
     char * nbhPath = argv[2];
 
     char line[MAX_BUFF];
+    FILE * file;
+    queryDataADT qd = newQueryData();
 
-    FILE * file = openCSV(nbhPath);
+    file = openCSV(nbhPath);
     if (file == NULL) {
         exit(1);
     }
 
+    nextLine(file, line, MAX_BUFF); // remueve el header del .csv
     while(nextLine(file, line, MAX_BUFF) != NULL) {
         char ** rowData = getColumns(line, nbhPos, FIELDS_NBH);
-        printArrayOfStrings(rowData, FIELDS_NBH);
-        // addNbh(rowData[NBH_NAME], atoi(rowData[NBH_POP])); //Buscar funcion string to unsigned
+        //printArrayOfStrings(rowData, FIELDS_NBH);
+        addNbh(qd, rowData[NBH_NAME], atoi(rowData[NBH_POP])); // Buscar funcion string to unsigned
         freeVec(rowData, FIELDS_NBH);
     }
 
     closeCSV(file);
+
+    #if DEBUG
+        toBegin(qd);
+        while(hasNext(qd)) {
+            char ** namePop = next(qd); //char ** next(queryDataADT qd);
+            printArrayOfStrings(namePop, FIELDS_NBH);
+            freeVec(namePop, FIELDS_NBH);
+        }
+    #endif
 
     file = openCSV(treePath);
     if (file == NULL) {
@@ -58,13 +71,25 @@ int main(int argc, char *argv[]) {
 
     while(nextLine(file, line, MAX_BUFF) != NULL) {
         char ** rowData = getColumns(line, treePos, FIELDS_TREE);
-        printArrayOfStrings(rowData, FIELDS_TREE);
-        // addTree(rowData[NBH], rowData[SCI_NAME], atof(rowData[DIAM]));
-        // addNbh(rowData[NBH_NAME], atoi(rowData[NBH_POP]));              Buscar funcion string to unsigned
+        // printArrayOfStrings(rowData, FIELDS_TREE);
+        addTree(qd, rowData[TREE_NBH]);
         freeVec(rowData, FIELDS_TREE);
     }
 
+    beginQuery1(qd);
+
+    #if DEBUG
+        size_t size;
+        while(hasNext(qd)) {
+            char ** ans = answer(qd, &size);
+            printArrayOfStrings(ans, size);
+            freeVec(ans, size);
+        }
+    #endif
+
     closeCSV(file);
+
+    freeQueryData(qd);
 
     return 0;
 }
@@ -76,7 +101,7 @@ void printArrayOfStrings(char ** strArr, size_t size) {
 }
 
 void freeVec(char ** vec, size_t size){
-  for(int i=0; i<size; i++)
+  for(int i = 0; i < size; i++)
       free(vec[i]);
   free(vec);
 }
