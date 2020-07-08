@@ -50,3 +50,39 @@ int compareQ1(nbhInfo * info1, nbhInfo * info2){
   else
     return strcmp(info1->name, info2->name);
 }
+
+
+queryDataADT newQueryData(void){
+  return calloc(1, sizeof(queryDataCDT)); //validar NULL
+}
+
+static nbhList addNbhRec(nbhList list, nbhInfo * newNbh, int * ok, int (*criteria) (nbhInfo *, nbhInfo *)) {
+  int c;
+  if (list == NULL || (c = criteria(newNbh, &list->info)) < 0) {
+    nbhNode * newNode = malloc(sizeof(nbhNode)); // validar NULL
+    newNode->info.trees = newNbh->trees;
+    newNode->info.population = newNbh->population;
+    newNode->info.name = strDuplicate(newNbh->name);
+    newNode->tail = list;
+    *ok = 1;
+    return newNode;
+  }
+  if( c > 0 )
+    list->tail = addNbhRec(list->tail, newNbh, ok, criteria);
+  return list;
+}
+
+// Se utiliza en addNbh para dar orden alfabetico a los barrios
+static int compareByName(nbhInfo * info1, nbhInfo * info2){
+  return strcmp(info1->name, info2->name);
+}
+
+void addNbh(queryDataADT qd, char * name, size_t population){
+  int ok = 0;
+  nbhInfo newNbh = { name, 0, population };
+  qd->firstNbh = addNbhRec(qd->firstNbh, &newNbh, &ok, compareByName);
+  if(ok){
+    qd->arrStatus = UNPREPARED;
+    (qd->listDim)++;
+  }
+}
