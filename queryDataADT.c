@@ -5,7 +5,7 @@
 
 /* Estructura que guarda la información necesaria para Q1 y Q2
 */
-typedef struct nbhInfo {  
+typedef struct nbhInfo {
   char * name;            // Nombre del barrio
   size_t trees;           // La cantidad de arboles del mismo
   size_t population;      // Su cantidad de habitantes
@@ -33,7 +33,7 @@ typedef struct queryDataCDT {
     size_t listDim;
     nbhList current;              // Iterador para recorrer la lista
     nbhInfo * nbhArr;             // Arreglo de barrios ordenados alfabeticamente
-    size_t arrDim;                
+    size_t arrDim;
     char currQuery;               // Flag del tipo de Query
     char arrStatus;               // PREPARED si se actualizó el arreglo despues del último addNbh
 } queryDataCDT;
@@ -85,4 +85,64 @@ void addNbh(queryDataADT qd, char * name, size_t population){
     qd->arrStatus = UNPREPARED;
     (qd->listDim)++;
   }
+}
+
+/* Se pasa la lista a un vector ordenado por names,
+*  donde se podrá hacer binSearch para comparar el string e
+*  incrementar la cantidad de árboles.
+*/
+static void listToArray(queryDataADT qd){
+  nbhInfo * tmp;
+  qd->arrDim = qd->listDim;
+  tmp = realloc(qd->nbhArr, qd->arrDim * sizeof(qd->nbhArr[0]));
+  if(tmp == NULL){
+      fprintf(stderr, "No memory\n");                             // utilizar errno
+      exit(1);                                                    // no abortar en backend
+  }
+  qd->nbhArr = tmp;
+  nbhList aux = qd->firstNbh;
+
+  // Se comparte el puntero al nombre del barrio ya que una vez seteado el nombre,
+  // no se lo modifica hasta que se libera el TAD
+  for(size_t newDim = 0; aux != NULL && newDim < qd->arrDim; newDim++) {
+    qd->nbhArr[newDim].population = aux->info.population;
+    qd->nbhArr[newDim].trees = aux->info.trees;
+    qd->nbhArr[newDim].name = strDuplicate(aux->info.name);
+
+    aux = aux->tail;
+  }
+}
+
+/* Retorna el indice donde se encontraba nbhName en el arreglo arr.
+*  Devuelve -1 si nbhName no está.
+*/
+static int binSearch(const char * nbhName, nbhInfo * arr, size_t size) {
+  int left = 0, right = size - 1;
+  while(left <= right) {
+    int mid = (left + right) / 2;
+    int c = strcmp(nbhName, arr[mid].name);
+    if (c == 0)
+      return mid;
+    if (c > 0)
+      left = mid + 1;
+    else
+      right = mid - 1;
+  }
+  return -1;
+}
+
+// Encuentra el barrio en el vector creado por listToArray e incrementa su campo tree en uno.
+void addTree(queryDataADT qd, const char * nbhName){
+    if (qd->arrStatus == UNPREPARED){
+        qd->arrStatus = PREPARED;
+        listToArray(qd);
+    }
+    int index = binSearch( nbhName, qd->nbhArr, qd->arrDim);
+
+    #if DEBUG
+        printf("\nindex: %d\n", index);
+    #endif
+
+    if(index >= 0)
+        (qd->nbhArr[index].trees)++;
 }
