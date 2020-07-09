@@ -33,11 +33,14 @@ void printArrayOfStrings(char ** strArr, size_t size);
 void freeVec(char ** vec, size_t size);
 
 int main(int argc, char *argv[]) {
+    char * treeCSVPath = argv[1];
+    char * nbhCSVPath  = argv[2];
+
     char line[MAX_BUFF];
     FILE * file;
     queryDataADT qd = newQueryData();
 
-    file = fopen(argv[2], "r");
+    file = fopen(nbhCSVPath, "r");
     if(file == NULL){
         perror("Error leyendo el archivo de barrios");
         return 1;
@@ -66,7 +69,7 @@ int main(int argc, char *argv[]) {
         printf("\n--------------------------------------------------------\n");
     #endif
 
-    file = fopen(argv[1], "r");
+    file = fopen(treeCSVPath, "r");
     if(file == NULL){
         perror("Error leyendo el archivo de arboles");
         return 1;
