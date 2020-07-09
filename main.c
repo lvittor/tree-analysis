@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h> // VER SI HACE FALTA ACA O PONERLO EN qdADT.h
 #include "csv.h"
 #include "queryDataADT.h"
 
 #define MAX_BUFF  1024 // Tamaño maximo del buffer de lectura
 #define FIELDS_TREE 3 // Cantidad de campos relevantes a leer de arboles.csv
-
 
 
 /* Número de columna de Comuna, Nombre cientifico, Diametro en arboles.csv
@@ -33,27 +33,25 @@ void printArrayOfStrings(char ** strArr, size_t size);
 void freeVec(char ** vec, size_t size);
 
 int main(int argc, char *argv[]) {
-    char * treePath = argv[1];
-    char * nbhPath = argv[2];
-
     char line[MAX_BUFF];
     FILE * file;
     queryDataADT qd = newQueryData();
 
-    file = openCSV(nbhPath);
-    if (file == NULL) {
-        exit(1);
+    file = fopen(argv[2], "r");
+    if(file == NULL){
+        perror("Error leyendo el archivo de barrios");
+        return 1;
     }
 
-    nextLine(file, line, MAX_BUFF); // remueve el header del .csv
-    while(nextLine(file, line, MAX_BUFF) != NULL) {
+    fgets(line, MAX_BUFF, file); // remueve el header del .csv
+    while(fgets(line, MAX_BUFF, file) != NULL) {
         char ** rowData = getColumns(line, nbhPos, FIELDS_NBH);
         //printArrayOfStrings(rowData, FIELDS_NBH);
         addNbh(qd, rowData[NBH_NAME], atoi(rowData[NBH_POP])); // Buscar funcion string to unsigned
         freeVec(rowData, FIELDS_NBH);
     }
 
-    closeCSV(file);
+    fclose(file);
 
     #if DEBUG
         toBegin(qd);
@@ -64,30 +62,51 @@ int main(int argc, char *argv[]) {
         }
     #endif
 
-    file = openCSV(treePath);
-    if (file == NULL) {
-        exit(1);
+    #if DEBUG
+        printf("\n--------------------------------------------------------\n");
+    #endif
+
+    file = fopen(argv[1], "r");
+    if(file == NULL){
+        perror("Error leyendo el archivo de arboles");
+        return 1;
     }
 
-    while(nextLine(file, line, MAX_BUFF) != NULL) {
+    while(fgets(line, MAX_BUFF, file) != NULL) {
         char ** rowData = getColumns(line, treePos, FIELDS_TREE);
         // printArrayOfStrings(rowData, FIELDS_TREE);
         addTree(qd, rowData[TREE_NBH]);
         freeVec(rowData, FIELDS_TREE);
     }
 
-    beginQuery1(qd);
+    fclose(file);
+
+    if(beginQuery1(qd) == ERROR)
+      return 1;
+
+    size_t size;
+    while(hasNext(qd)) {
+        char ** ans = answer(qd, &size);
+        #if DEBUG
+            printArrayOfStrings(ans, size);
+        #endif
+        freeVec(ans, size);
+    }
 
     #if DEBUG
-        size_t size;
-        while(hasNext(qd)) {
-            char ** ans = answer(qd, &size);
-            printArrayOfStrings(ans, size);
-            freeVec(ans, size);
-        }
+        printf("\n--------------------------------------------------------\n");
     #endif
 
-    closeCSV(file);
+    if(beginQuery2(qd) == ERROR)
+      return 1;
+
+    while(hasNext(qd)) {
+        char ** ans = answer(qd, &size);
+        #if DEBUG
+            printArrayOfStrings(ans, size);
+        #endif
+        freeVec(ans, size);
+    }
 
     freeQueryData(qd);
 
