@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
     FILE * file;
     queryDataADT qd = newQueryData();
 
+    /* --- Lectura de datos de barrios.csv ---*/
     file = fopen(nbhCSVPath, "r");
     if(file == NULL){
         perror("Error leyendo el archivo de barrios");
@@ -69,6 +70,8 @@ int main(int argc, char *argv[]) {
         printf("\n--------------------------------------------------------\n");
     #endif
 
+    /* --- Lectura de datos de arboles.csv --- */
+
     file = fopen(treeCSVPath, "r");
     if(file == NULL){
         perror("Error leyendo el archivo de arboles");
@@ -85,46 +88,22 @@ int main(int argc, char *argv[]) {
 
     fclose(file);
 
-    if(beginQuery(qd, 1) == ERROR)//si hay error hacer freeQueryData
-        return 1;
-
-    size_t size;
-    while(hasNext(qd)) {
-        char ** ans = answer(qd, &size);
+    for (unsigned int i = 1; i <= 3; i++) {
         #if DEBUG
-            printArrayOfStrings(ans, size);
+            printf("\n--------- QUERY %d ---------\n", i);
         #endif
-        freeVec(ans, size);
-    }
 
-    #if DEBUG
-        printf("\n--------------------------------------------------------\n");
-    #endif
+        if(beginQuery(qd, i) == ERROR) //si hay error hacer freeQueryData
+            return 1;
 
-    if(beginQuery(qd, 2) == ERROR)//si hay error hacer freeQueryData
-      return 1;
-
-    while(hasNext(qd)) {
-        char ** ans = answer(qd, &size);
-        #if DEBUG
-            printArrayOfStrings(ans, size);
-        #endif
-        freeVec(ans, size);
-    }
-
-    #if DEBUG
-        printf("\n--------------------------------------------------------\n");
-    #endif
-
-    if(beginQuery(qd, 3) == ERROR) //si hay error hacer freeQueryData
-      return 1;
-
-    while(hasNext(qd)) {
-        char ** ans = answer(qd, &size);
-        #if DEBUG
-            printArrayOfStrings(ans, size);
-        #endif
-        freeVec(ans, size);
+        size_t size;
+        while(hasNext(qd)) {
+            char ** ans = answer(qd, &size);
+            #if DEBUG
+                printArrayOfStrings(ans, size);
+            #endif
+            freeVec(ans, size);
+        }
     }
 
     freeQueryData(qd);
