@@ -7,7 +7,7 @@
 #define CSV_H
 
 /* Definición del tipo de delimitador */
-#define DELIMITER ";\n"
+#define DELIMITER ";"
 
 // /* Función: Permite abrir el .csv en modo lectura mediante un path al archivo.
 // *  Uso: file = openCSV(path)
