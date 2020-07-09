@@ -1,5 +1,8 @@
 #ifndef QUERY_DATA_ADT_H
 #define QUERY_DATA_ADT_H
+#define EPSILON 0.00001    // Util para la Query 2
+#define ERROR   0          // hubo error de memoria
+#define SUCCESS !ERROR     // no hubo error de memoria
 
 typedef struct queryDataCDT * queryDataADT;
 
@@ -21,7 +24,7 @@ void addNbh(queryDataADT qd, char * name, size_t population);
 *  Descripción: Agrega un árbol cuyo barrio es "nbhName".
 *  De no existir el barrio, no hace nada.
 */
-void addTree(queryDataADT qd, const char * nbhName);
+int addTree(queryDataADT qd, const char * nbhName, const char * sciName, float diam);
 
 /* Función: Libera la memoria almacenada para el TAD
 *  Uso: freeQueryData(qd);
@@ -29,11 +32,7 @@ void addTree(queryDataADT qd, const char * nbhName);
 */
 void freeQueryData(queryDataADT qd);
 
-/* Función: Prepara los datos según el criterio de la query 1
-*  Uso: beginQuery1(qd);
-*  Descripción:
-*/
-void beginQuery1(queryDataADT qd);
+int beginQuery(queryDataADT qd, int queryNum);
 
 /* Función:
 *  Uso:
@@ -46,5 +45,19 @@ int hasNext(queryDataADT qd);
 *  Descripción:
 */
 char ** answer(queryDataADT qd, size_t * size);
+
+/* Función:
+*  Uso:
+*  Descripción:
+*/
+void toBegin(queryDataADT qd);
+
+/* Función:
+*  Uso:
+*  Descripción:
+*/
+#if DEBUG
+char ** next(queryDataADT qd);
+#endif
 
 #endif

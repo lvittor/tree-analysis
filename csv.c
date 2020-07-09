@@ -3,6 +3,7 @@
 #include <string.h>
 #include "csv.h"
 
+
 static char * strDuplicate(const char * src) {
     char * dst = malloc(strlen(src) + 1);   // Guarda espacio para el nuevo string.
     if (dst == NULL)                        // Si no hay memoria,

@@ -53,14 +53,14 @@ int main(int argc, char *argv[]) {
 
     fclose(file);
 
-    #if DEBUG
-        toBegin(qd);
-        while(hasNext(qd)) {
-            char ** namePop = next(qd); //char ** next(queryDataADT qd);
-            printArrayOfStrings(namePop, FIELDS_NBH);
-            freeVec(namePop, FIELDS_NBH);
-        }
-    #endif
+    // #if DEBUG
+    //     toBegin(qd);
+    //     while(hasNext(qd)) {
+    //         char ** namePop = next(qd); //char ** next(queryDataADT qd);
+    //         printArrayOfStrings(namePop, FIELDS_NBH);
+    //         freeVec(namePop, FIELDS_NBH);
+    //     }
+    // #endif
 
     #if DEBUG
         printf("\n--------------------------------------------------------\n");
@@ -72,17 +72,18 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    fgets(line, MAX_BUFF, file); // remueve el header del .csv
     while(fgets(line, MAX_BUFF, file) != NULL) {
         char ** rowData = getColumns(line, treePos, FIELDS_TREE);
         // printArrayOfStrings(rowData, FIELDS_TREE);
-        addTree(qd, rowData[TREE_NBH]);
+        addTree(qd, rowData[TREE_NBH], rowData[TREE_SCI_NAME], atof(rowData[TREE_DIAM]));
         freeVec(rowData, FIELDS_TREE);
     }
 
     fclose(file);
 
-    if(beginQuery1(qd) == ERROR)
-      return 1;
+    if(beginQuery(qd, 1) == ERROR)//si hay error hacer freeQueryData
+        return 1;
 
     size_t size;
     while(hasNext(qd)) {
@@ -97,7 +98,22 @@ int main(int argc, char *argv[]) {
         printf("\n--------------------------------------------------------\n");
     #endif
 
-    if(beginQuery2(qd) == ERROR)
+    if(beginQuery(qd, 2) == ERROR)//si hay error hacer freeQueryData
+      return 1;
+
+    while(hasNext(qd)) {
+        char ** ans = answer(qd, &size);
+        #if DEBUG
+            printArrayOfStrings(ans, size);
+        #endif
+        freeVec(ans, size);
+    }
+
+    #if DEBUG
+        printf("\n--------------------------------------------------------\n");
+    #endif
+
+    if(beginQuery(qd, 3) == ERROR) //si hay error hacer freeQueryData
       return 1;
 
     while(hasNext(qd)) {
