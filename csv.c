@@ -1,13 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "csv.h"
+
 
 #define TRUE_DEL DELIMITER "\n"
 
 static char * strDuplicate(const char * src) {
     char * dst = malloc(strlen(src) + 1);   // Guarda espacio para el nuevo string.
-    if (dst == NULL)                        // Si no hay memoria,
+    errno = 0;
+    if (dst == NULL || errno == ENOMEM)     // Si no hay memoria,
         perror("Error en malloc()");        // error.
     else                                    // Si no,
         strcpy(dst, src);                   // hace la copia
@@ -16,7 +19,8 @@ static char * strDuplicate(const char * src) {
 
 char ** readCSVColumns(const char * line, const size_t * desiredColumns, size_t quantity) {
     char ** ans = calloc(quantity, sizeof(ans[0]));
-    if(ans == NULL){
+    errno = 0;
+    if(ans == NULL || errno == ENOMEM){
         perror("Error en calloc()");
         return NULL;
     }
