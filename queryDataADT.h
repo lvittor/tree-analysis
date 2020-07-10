@@ -9,7 +9,7 @@ typedef struct queryDataCDT * queryDataADT;
 #define QUERIES 3
 
 /* Función: Crea una nueva instancia de queryDataADT
-*  Uso: qd = newQueryData(void);
+*  Uso: queryDataADT qd = newQueryData(void);
 *  Descripción: -
 */
 queryDataADT newQueryData(void);
@@ -17,14 +17,12 @@ queryDataADT newQueryData(void);
 /* Función: Almacena la información del barrio
 *  Uso: addNbh(qd, name, population);
 *  Descripción: Agrega un barrio de nombre "name" y su cantidad de habitantes "population".
-*  Si ya se había agregado el mismo nombre, no hace nada.
 */
 void addNbh(queryDataADT qd, char * name, size_t population);
 
 /* Función: Almacena la información del arbol
 *  Uso: addTree(queryDataADT qd, const char * nbhName);
-*  Descripción: Agrega un árbol cuyo barrio es "nbhName".
-*  De no existir el barrio, no hace nada.
+*  Descripción: Agrega un árbol cuyo barrio es nbhName, cuyo nombre cientifico es sciName y cuyo diametro a la altura del pecho es diam.
 */
 int addTree(queryDataADT qd, const char * nbhName, const char * sciName, float diam);
 
@@ -34,32 +32,25 @@ int addTree(queryDataADT qd, const char * nbhName, const char * sciName, float d
 */
 void freeQueryData(queryDataADT qd);
 
+/* Función: Prepara el recorrido de las respuestas para una query particular.
+*  Uso: beginQuery(qd, queryNum);
+*  Descripción: Retorna ERROR si ocurrió un fallo y no se puede comenzar la query.
+*  Retorna SUCCESS si es posible comenzar.
+*  queryNum debe encontrarse entre 1 y QUERIES inclusive.
+*/
 int beginQuery(queryDataADT qd, int queryNum);
 
-/* Función:
-*  Uso:
-*  Descripción:
+/* Función: Permite recorrer los datos hasta que se terminen.
+*  Uso: hasNext(qd)
+*  Descripción: Devuelve 1 si hay mas datos, 0 sino.
 */
 int hasNext(queryDataADT qd);
 
-/* Función:
-*  Uso:
-*  Descripción:
+/* Función: Retorna uno a uno los datos correspondientes a cada query
+*  Uso: char ** ans = answer(qd, &size);
+*  Descripción: Devuelve un vector de punteros a char correspondientes a la query actual.
+*  Se debe liberar la memoria almacenada para cada string.
 */
 char ** answer(queryDataADT qd, size_t * size);
-
-/* Función:
-*  Uso:
-*  Descripción:
-*/
-void toBegin(queryDataADT qd);
-
-/* Función:
-*  Uso:
-*  Descripción:
-*/
-#if DEBUG
-char ** next(queryDataADT qd);
-#endif
 
 #endif

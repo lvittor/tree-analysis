@@ -113,7 +113,6 @@ int main(int argc, char *argv[]) {
             writeCSVLine(file, ans, size);
             freeVec(ans, size);
         }
-
         fclose(file);
     }
 

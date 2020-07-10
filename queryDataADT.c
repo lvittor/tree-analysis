@@ -364,16 +364,6 @@ int hasNext(queryDataADT qd) {
     }
 }
 
-
-char ** next(queryDataADT qd) {
-  char ** ans = malloc( 2 * sizeof(ans[0]) );
-  ans[0] = strDuplicate(qd->current->info.name);
-  ans[1] = allocStringFromSize(qd->current->info.population);
-  qd->current = qd->current->tail;
-  return ans;
-}
-
-
 char ** answer(queryDataADT qd, size_t * size) {
   if(! hasNext(qd)){
     fprintf(stderr, "Query data has not next\n");

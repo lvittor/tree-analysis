@@ -16,9 +16,9 @@
 */
 char ** readCSVColumns(const char * line, const size_t * desiredColumns, size_t quantity);
 
-/* Función:
-*  Uso:
-*  Descripción:
+/* Función: Escribe en el archivo .csv (file) el arreglo pasado por parametro (arr) con dimension (size).
+*  Uso: -
+*  Descripción: -
 */
 void writeCSVLine(FILE * file, char ** arr, size_t size);
 

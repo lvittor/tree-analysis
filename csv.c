@@ -3,7 +3,7 @@
 #include <string.h>
 #include "csv.h"
 
-#define TRUE_DEL    DELIMITER "\n"
+#define TRUE_DEL DELIMITER "\n"
 
 static char * strDuplicate(const char * src) {
     char * dst = malloc(strlen(src) + 1);   // Guarda espacio para el nuevo string.
@@ -44,8 +44,7 @@ char ** readCSVColumns(const char * line, const size_t * desiredColumns, size_t 
 }
 
 void writeCSVLine(FILE * file, char ** arr, size_t size) {
-    for (size_t i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++)
         fprintf(file, "%s%s", (i == 0 ? "" : DELIMITER), arr[i]);
-    }
     fputc('\n', file);
 }
