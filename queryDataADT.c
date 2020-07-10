@@ -181,3 +181,85 @@ int addTree(queryDataADT qd, const char * nbhName, const char * sciName, float d
         return ERROR;
     return SUCCESS;
 }
+
+
+int beginQuery(queryDataADT qd, int queryNum){
+    static pCompFunc compArr[QUERIES] = {compareQ1, compareQ2, compareQ3};
+
+    if(queryNum <= 0 || queryNum > QUERIES){
+        fprintf(stderr, "Error al hacer la query %d: no existe.", queryNum);
+        return ERROR;
+    }
+
+    qd->iterQuery = 0;
+    qd->currQuery = queryNum;
+    switch(queryNum) {
+        case 1: case 2:
+            qsort(qd->q1_2.arr, qd->q1_2.dim, sizeof(qd->q1_2.arr[0]), compArr[queryNum-1]);
+            break;
+        case 3:
+            qsort(qd->q3.arr, qd->q3.dim, sizeof(qd->q3.arr[0]), compArr[queryNum-1]);
+            #if DEBUG
+                printf("Cantidad de especies encontradas: %lu\n\n", qd->q3.dim);
+            #endif
+            break;
+        default:
+            return ERROR;
+    }
+
+    return SUCCESS;
+}
+
+int hasNext(queryDataADT qd) {
+    switch(qd->currQuery) {
+        case 1: case 2:
+            return qd->iterQuery < qd->q1_2.dim;
+        case 3:
+            return qd->iterQuery < qd->q3.dim;
+        default:
+            return 0;
+    }
+}
+
+char ** answer(queryDataADT qd, size_t * size) {
+    static pInfoQuery getInfo[QUERIES] = {infoQ1, infoQ2, infoQ3};
+
+    if(! hasNext(qd)){
+        fprintf(stderr, "No hay datos para acceder.\n");
+        return NULL;
+    }
+
+    char ** ans;
+    switch(qd->currQuery) {
+        case 1: case 2:
+            //BARRIO;CANT_ARBOLES o BARRIO;CANT_ARBOLES/HABITANTES
+            ans = getInfo[qd->currQuery - 1](&(qd->q1_2.arr[qd->iterQuery]), size);
+            break;
+        case 3:
+            // NOMBRE_CIENTIFICO;DIAM_PROMEDIO
+            ans = getInfo[qd->currQuery - 1](&(qd->q3.arr[qd->iterQuery]), size);
+            break;
+        default:
+            return NULL;
+    }
+    (qd->iterQuery)++;
+    return ans;
+}
+
+static void freeNbhArr(nbhInfo * arr, size_t size){
+  for (size_t i = 0; i < size; i++)
+    free(arr[i].name);
+  free(arr);
+}
+
+static void freeSpeciesArr(treeSpecie * arr, size_t size){
+  for (size_t i = 0; i < size; i++)
+    free(arr[i].name);
+  free(arr);
+}
+
+void freeQueryData(queryDataADT qd) {
+  freeNbhArr(qd->q1_2.arr, qd->q1_2.dim);
+  freeSpeciesArr(qd->q3.arr, qd->q3.dim);
+  free(qd);
+}
