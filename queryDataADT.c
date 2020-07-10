@@ -88,3 +88,90 @@ typedef struct queryDataCDT {
     struct speciesArr q3;
     size_t iterQuery;
 } queryDataCDT;
+
+queryDataADT newQueryData(void){
+  queryDataADT qd;
+  if( (qd = calloc(1, sizeof(queryDataCDT))) == NULL )
+    perror("Error en calloc()");
+  return qd;
+}
+
+int addNbh(queryDataADT qd, char * name, size_t population){
+    for (size_t i = 0; i < qd->q1_2.dim; i++) {
+        if(strcmp(name, qd->q1_2.arr[i].name) == 0){
+            fprintf(stderr, "Error al agregar el barrio %s : ya existe.", name);
+            return ERROR;
+        }
+    }
+    errno = 0;
+    nbhInfo * tmp = realloc(qd->q1_2.arr, (qd->q1_2.dim + 1) * sizeof(tmp[0]));
+    if (tmp == NULL || errno == ENOMEM) {
+        perror("Error en realloc()");
+        return ERROR;
+    }
+    qd->q1_2.arr = tmp;
+    size_t lastIndex = (qd->q1_2.dim)++; // Guardamos el último índice y aumentamos la dimensión en 1.
+    qd->q1_2.arr[lastIndex].name = strDuplicate(name);
+    qd->q1_2.arr[lastIndex].population = population;
+    qd->q1_2.arr[lastIndex].trees = 0;
+
+    return SUCCESS;
+}
+
+/* Retorna el indice donde se encontraba nbhName en el arreglo arr.
+*  Devuelve -1 si nbhName no está.
+*/
+static int binSearch(const char * nbhName, nbhInfo * arr, size_t size) {
+  int left = 0, right = size - 1;
+  while(left <= right) {
+    int mid = (left + right) / 2;
+    int c = strcmp(nbhName, arr[mid].name);
+    if (c == 0)
+      return mid;
+    if (c > 0)
+      left = mid + 1;
+    else
+      right = mid - 1;
+  }
+  return -1;
+}
+
+static int addScientificTree(queryDataADT qd, const char * speciesName, float diam) {
+    for (size_t i = 0; i < qd->q3.dim; i++) {
+        if (strcmp(speciesName, qd->q3.arr[i].name) == 0) {   // Si la especia ya estaba guardada,
+            qd->q3.arr[i].count++;                            // Aumenta la cantidad
+            qd->q3.arr[i].sumDiam += diam;                    // Actualiza sumatoria de diametros
+            return SUCCESS;
+        }
+    }
+    /* --- Si no habia un ejemplar anterior --- */
+
+    treeSpecie * tmp = realloc(qd->q3.arr, (qd->q3.dim + 1) * sizeof(tmp[0]));
+    errno = 0;
+    if (tmp == NULL || errno == ENOMEM) {
+        perror("Error en realloc()");
+        return ERROR;
+    }
+    qd->q3.arr = tmp;
+    size_t lastIndex = (qd->q3.dim)++;
+    qd->q3.arr[lastIndex].name = strDuplicate(speciesName);
+    qd->q3.arr[lastIndex].count = 1;
+    qd->q3.arr[lastIndex].sumDiam = diam;
+    return SUCCESS;
+}
+
+static int addTreeToNbh(queryDataADT qd, const char * nbhName){
+    if (qd->q1_2.isSorted == FALSE) {
+        qsort(qd->q1_2.arr, qd->q1_2.dim, sizeof(qd->q1_2.arr[0]), compareByName); // Ordenar por nombre
+        qd->q1_2.isSorted = TRUE;
+    }
+
+    int index = binSearch(nbhName, qd->q1_2.arr, qd->q1_2.dim);
+    if(index < 0){
+        fprintf(stderr, "Error al agregar arbol: %s no existe.", nbhName);
+        return ERROR;
+    }
+
+    (qd->q1_2.arr[index].trees)++;
+    return SUCCESS;
+}
