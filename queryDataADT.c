@@ -96,6 +96,102 @@ queryDataADT newQueryData(void){
   return qd;
 }
 
+/* --- Queries --- */
+typedef int (*pCompFunc)(const void *, const void *);
+typedef char ** (*pInfoQuery) (const void *, size_t *);
+
+// Query 1
+// ->{NOMBRE_BARRIO, CANT_DE_ARBOLES}
+// Se debe ordenar de manera decreciente por la cantidad de arboles.
+// Si son iguales, se prioriza el orden alfabetico de los barrios.
+
+static int compareQ1(const void * i1, const void * i2){
+    struct nbhInfo * info1 = (struct nbhInfo *)i1;
+    struct nbhInfo * info2 = (struct nbhInfo *)i2;
+    int c =  info2->trees - info1->trees;
+    if (c != 0)
+        return c;
+    return strcmp( info1->name, info2->name);
+}
+
+static char ** infoQ1(const void * s, size_t * size) {
+    struct nbhInfo * pNbh = (struct nbhInfo *)s;
+    *size = 2;
+    char ** ans = malloc( (*size) * sizeof(ans[0]) );
+    errno = 0;
+    if(ans == NULL || errno == ENOMEM) {
+        perror("Error en malloc()");
+        return NULL;
+    }
+    ans[0] = strDuplicate(pNbh->name);
+    ans[1] = allocStringFromSize(pNbh->trees); /*CANT_DE_ARBOLES a string con sprintf*/
+    return ans;
+}
+
+// Query 2
+// ->{NOMBRE_BARRIO, CANT_DE_ARBOLES/CANT_DE_HABITANTES}
+// Se debe ordenar de manera decreciente por la cantidad de arboles.
+// Si son iguales, se prioriza el orden alfabetico de los barrios.
+static int compareQ2(const void * i1, const void * i2){
+    struct nbhInfo * info1 = (struct nbhInfo *)i1;
+    struct nbhInfo * info2 = (struct nbhInfo *)i2;
+    float ratio1 = (float)info1->trees/info1->population;
+    float ratio2 = (float)info2->trees/info2->population;
+    float c = truncate(ratio2) - truncate(ratio1);
+    if(fabs(c) < EPSILON)
+        return strcmp(info1->name, info2->name);
+    return (c > 0) ? 1 : -1;
+}
+
+// ->{NOMBRE_BARRIO, CANT_DE_ARBOLES/CANT_DE_HABITANTES}
+static char ** infoQ2(const void * s, size_t * size) {
+    struct nbhInfo * pNbh = (struct nbhInfo *)s;
+    *size = 2;
+    char ** ans = malloc( (*size) * sizeof(ans[0]) );
+    if(ans == NULL || errno == ENOMEM) {
+        perror("Error en malloc()");
+        return NULL;
+    }
+    ans[0] = strDuplicate(pNbh->name);
+    #if DEBUG
+        printf("Valor original: %f\n", (float)pNbh->trees/pNbh->population);
+    #endif
+    ans[1] = allocStringFromFloat((float)pNbh->trees/pNbh->population);
+    return ans;
+}
+
+static int compareQ3(const void * s1, const void * s2) {
+    struct treeSpecie * specie1 = (struct treeSpecie *)s1;
+    struct treeSpecie * specie2 = (struct treeSpecie *)s2;
+    float avDiam1 = specie1->sumDiam/specie1->count;
+    float avDiam2 = specie2->sumDiam/specie2->count;
+    float c = truncate(avDiam2) - truncate(avDiam1);
+    if (fabs(c) < EPSILON)
+        return strcmp(specie1->name, specie2->name);
+    return (c < 0) ? -1 : 1;
+}
+
+// ->{NOMBRE_CIENTIFICO_ARBOL, DIAM_PROMEDIO}
+static char ** infoQ3(const void * s, size_t * size) {
+    struct treeSpecie * pTree = (struct treeSpecie *)s;
+    *size = 2;
+    char ** ans = malloc( (*size) * sizeof(ans[0]) );
+    if(ans == NULL || errno == ENOMEM) {
+        perror("Error en malloc()");
+        return NULL;
+    }
+    ans[0] = strDuplicate(pTree->name);
+    ans[1] = allocStringFromFloat(pTree->sumDiam/pTree->count);
+    return ans;
+}
+
+// Se utiliza en addNbh para dar orden alfabetico a los barrios
+static int compareByName(const void * i1, const void * i2){
+  struct nbhInfo * info1 = (struct nbhInfo *)i1;
+  struct nbhInfo * info2 = (struct nbhInfo *)i2;
+  return strcmp(info1->name, info2->name);
+}
+
 int addNbh(queryDataADT qd, char * name, size_t population){
     for (size_t i = 0; i < qd->q1_2.dim; i++) {
         if(strcmp(name, qd->q1_2.arr[i].name) == 0){
