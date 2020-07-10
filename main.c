@@ -4,6 +4,7 @@
 #include "csv.h"
 #include "queryDataADT.h"
 
+#define MAX_OUTPUT_NAME 15
 #define MAX_BUFF        1024    // Tamaño maximo del buffer de lectura
 
 #define FIELDS_TREE 3 // Cantidad de campos relevantes a leer de arboles.csv
@@ -98,8 +99,8 @@ int main(int argc, char *argv[]) {
             printf("\n--------- QUERY %d ---------\n", i);
         #endif
 
-        char outputName[MAX_BUFF];
-        snprintf(outputName, MAX_BUFF, "query%d.csv", i);
+        char outputName[MAX_OUTPUT_NAME];
+        snprintf(outputName, MAX_OUTPUT_NAME, "query%d.csv", i);
         file = fopen(outputName, "w");
 
         if(beginQuery(qd, i) == ERROR) //si hay error hacer freeQueryData
