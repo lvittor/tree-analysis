@@ -4,10 +4,9 @@
 #include "csv.h"
 #include "queryDataADT.h"
 
-#define MAX_BUFF  1024 // Tamaño maximo del buffer de lectura
+#define MAX_BUFF        1024    // Tamaño maximo del buffer de lectura
+
 #define FIELDS_TREE 3 // Cantidad de campos relevantes a leer de arboles.csv
-
-
 /* Número de columna de Comuna, Nombre cientifico, Diametro en arboles.csv
 *  Necesariamente de menor a mayor
 */
@@ -21,10 +20,15 @@
 
 
 #define FIELDS_NBH  2 // Cantidad de campos relevantes a leer de barrio.csv
-
 /* Número de columna de Nombre, Cantidad de habitantes en barrio.csv */
 size_t nbhPos[FIELDS_NBH] = {0, 1};
 enum {NBH_NAME = 0, NBH_POP};
+
+const char * headers[] = {
+    "BARRIO;ARBOLES",
+    "BARRIO;ARBOLES_POR_HABITANTE",
+    "NOMBRE_CIENTIFICO;PROMEDIO_DIAMETRO"
+};
 
 /* Función: Imprimime un vector de punteros a char mediante salida estandar */
 void printArrayOfStrings(char ** strArr, size_t size);
@@ -40,6 +44,7 @@ int main(int argc, char *argv[]) {
     FILE * file;
     queryDataADT qd = newQueryData();
 
+
     /* --- Lectura de datos de barrios.csv ---*/
     file = fopen(nbhCSVPath, "r");
     if(file == NULL){
@@ -49,7 +54,7 @@ int main(int argc, char *argv[]) {
 
     fgets(line, MAX_BUFF, file); // remueve el header del .csv
     while(fgets(line, MAX_BUFF, file) != NULL) {
-        char ** rowData = getColumns(line, nbhPos, FIELDS_NBH);
+        char ** rowData = readCSVColumns(line, nbhPos, FIELDS_NBH);
         //printArrayOfStrings(rowData, FIELDS_NBH);
         addNbh(qd, rowData[NBH_NAME], atoi(rowData[NBH_POP])); // Buscar funcion string to unsigned
         freeVec(rowData, FIELDS_NBH);
@@ -80,7 +85,7 @@ int main(int argc, char *argv[]) {
 
     fgets(line, MAX_BUFF, file); // remueve el header del .csv
     while(fgets(line, MAX_BUFF, file) != NULL) {
-        char ** rowData = getColumns(line, treePos, FIELDS_TREE);
+        char ** rowData = readCSVColumns(line, treePos, FIELDS_TREE);
         // printArrayOfStrings(rowData, FIELDS_TREE);
         addTree(qd, rowData[TREE_NBH], rowData[TREE_SCI_NAME], atof(rowData[TREE_DIAM]));
         freeVec(rowData, FIELDS_TREE);
@@ -93,8 +98,14 @@ int main(int argc, char *argv[]) {
             printf("\n--------- QUERY %d ---------\n", i);
         #endif
 
+        char outputName[MAX_BUFF];
+        snprintf(outputName, MAX_BUFF, "query%d.csv", i);
+        file = fopen(outputName, "w");
+
         if(beginQuery(qd, i) == ERROR) //si hay error hacer freeQueryData
             return 1;
+
+        fprintf(file, "%s\n", headers[i-1]);
 
         size_t size;
         while(hasNext(qd)) {
@@ -102,8 +113,11 @@ int main(int argc, char *argv[]) {
             #if DEBUG
                 printArrayOfStrings(ans, size);
             #endif
+            writeCSVLine(file, ans, size);
             freeVec(ans, size);
         }
+
+        fclose(file);
     }
 
     freeQueryData(qd);
