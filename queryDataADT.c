@@ -4,8 +4,6 @@
 #include <errno.h>
 #include "queryDataADT.h"
 
-#define MAX_QUERY 3
-
 #define fabs(n) ((n) < 0 ? -(n) : (n))
 
 
@@ -325,8 +323,8 @@ void toBegin(queryDataADT qd){
 }
 
 int beginQuery(queryDataADT qd, int queryNum){
-    static pCompFunc compArr[MAX_QUERY] = {compareQ1, compareQ2, compareQ3};
-    if(queryNum <= 0 || queryNum > MAX_QUERY)
+    static pCompFunc compArr[QUERIES] = {compareQ1, compareQ2, compareQ3};
+    if(queryNum <= 0 || queryNum > QUERIES)
         return ERROR;
 
     qd->currQuery = queryNum;
@@ -345,7 +343,7 @@ int beginQuery(queryDataADT qd, int queryNum){
             qsort(qd->speciesArr, qd->speciesCount, sizeof(struct treeSpecie), compArr[queryNum-1]);
             qd->itSpecies = 0;
             #if DEBUG
-                printf("%lu\n", qd->speciesCount);
+                printf("Cantidad de especies encontradas: %lu\n\n", qd->speciesCount);
             #endif
             return SUCCESS;
         default:
@@ -426,5 +424,3 @@ void freeQueryData(queryDataADT qd) {
   freeSpeciesArr(qd->speciesArr, qd->speciesCount);
   free(qd);
 }
-
-// qsort(arr, sizeArr, sizeof(struct treeSpecie), cmpSpecie);

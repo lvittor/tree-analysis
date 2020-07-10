@@ -6,6 +6,8 @@
 
 typedef struct queryDataCDT * queryDataADT;
 
+#define QUERIES 3
+
 /* Función: Crea una nueva instancia de queryDataADT
 *  Uso: qd = newQueryData(void);
 *  Descripción: -
