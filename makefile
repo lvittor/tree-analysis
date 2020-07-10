@@ -17,4 +17,4 @@ debug: CFLAGS+= $(DEBUG_COMPILER)
 debug: all
 
 clean:
-	rm -rf $(OUTPUT_FILE_BUE) $(OUTPUT_FILE_VAN) *.o
+	rm -rf $(OUTPUT_FILE_BUE) $(OUTPUT_FILE_VAN) *.o query*.csv
