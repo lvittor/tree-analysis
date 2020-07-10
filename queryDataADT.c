@@ -6,14 +6,15 @@
 
 #define fabs(n) ((n) < 0 ? -(n) : (n))
 
-
+// Trunca un numero real a 2 decimales.
 static float truncate(float value){
-    return (int)(value * 100)/100.0;
+    return (int)(value * 100) / 100.0;
 }
 
 static char * strDuplicate(const char * src) {
     char * dst = malloc(strlen(src) + 1);   // Guarda espacio para el nuevo string.
-    if(dst == NULL)                         // Si no hay memoria
+    errno = 0;
+    if(dst == NULL || errno == ENOMEM)      // Si no hay memoria
         perror("Error en malloc()");        // error.
     else                                    // Si no,
         strcpy(dst, src);                   // hace la copia
@@ -23,7 +24,8 @@ static char * strDuplicate(const char * src) {
 static char * allocStringFromSize(size_t n) {
     size_t len = snprintf (NULL, 0, "%lu", n);       // Devuelve la cantidad de caracteres del numero
     char * ans = malloc((len + 1) * sizeof(ans[0])); // Guarda espacio para el nuevo string
-    if(ans == NULL)                                  // Si no hay memoria,
+    errno = 0;
+    if(ans == NULL || errno == ENOMEM)               // Si no hay memoria,
         perror("Error en malloc()");                 // error.
     else                                             // Si no,
         snprintf(ans, len + 1, "%lu", n);            // Guarda como string el valor de n
@@ -31,10 +33,11 @@ static char * allocStringFromSize(size_t n) {
 }
 
 static char * allocStringFromFloat(float f) {
-    f = (int)(f * 100) / 100.0;                       // Trunca a dos decimales
+    f = truncate(f);                                  // Trunca a dos decimales
     size_t len = snprintf (NULL, 0, "%.2f", f);       // Devuelve la cantidad de caracteres del numero ya truncado
     char * ans = malloc((len + 1) * sizeof(ans[0]));  // Guarda espacio para el nuevo string
-    if(ans == NULL)                                   // Si no hay memoria,
+    errno = 0;
+    if(ans == NULL || errno == ENOMEM)                // Si no hay memoria,
         perror("Error en malloc()");                  // error.
     else                                              // Si no,
         snprintf(ans, len + 1, "%.2f", f);            // Guarda como string el valor de f
