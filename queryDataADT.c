@@ -175,3 +175,9 @@ static int addTreeToNbh(queryDataADT qd, const char * nbhName){
     (qd->q1_2.arr[index].trees)++;
     return SUCCESS;
 }
+
+int addTree(queryDataADT qd, const char * nbhName, const char * sciName, float diam){
+    if (addScientificTree(qd, sciName, diam) == ERROR || addTreeToNbh(qd, nbhName) == ERROR)
+        return ERROR;
+    return SUCCESS;
+}
