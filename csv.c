@@ -14,7 +14,7 @@ static char * strDuplicate(const char * src) {
     return dst;                             // Retorna el nuevo string
 }
 
-char ** getColumns(const char * line, const size_t * desiredColumns, size_t quantity) {
+char ** readCSVColumns(const char * line, const size_t * desiredColumns, size_t quantity) {
     char ** ans = calloc(quantity, sizeof(ans[0]));
     if(ans == NULL){
         perror("Error en calloc()");
@@ -25,7 +25,7 @@ char ** getColumns(const char * line, const size_t * desiredColumns, size_t quan
     if(tmp == NULL)
         return NULL;
 
-    char * token = strtok(tmp, DELIMITER); // no verificamos token, asumimos formato correcto.
+    char * token = strtok(tmp, TRUE_DEL); // no verificamos token, asumimos formato correcto.
 
     size_t currField = 0, currCol = 0;
     do {
@@ -36,9 +36,16 @@ char ** getColumns(const char * line, const size_t * desiredColumns, size_t quan
           ans[currField++] = aux;
         }
         currCol++;
-    } while(currField < quantity && (token = strtok(NULL, DELIMITER)) != NULL);  // no verificamos token, asumimos formato correcto.
+    } while(currField < quantity && (token = strtok(NULL, TRUE_DEL)) != NULL);  // no verificamos token, asumimos formato correcto.
 
     free(tmp);
 
     return ans;
+}
+
+void writeCSVLine(FILE * file, char ** arr, size_t size) {
+    for (size_t i = 0; i < size; i++) {
+        fprintf(file, "%s%s", (i == 0 ? "" : DELIMITER), arr[i]);
+    }
+    fputc('\n', file);
 }
