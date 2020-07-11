@@ -18,7 +18,7 @@ queryDataADT newQueryData(void);
 *  Uso: addNbh(qd, name, population);
 *  Descripción: Agrega un barrio de nombre "name" y su cantidad de habitantes "population".
 */
-void addNbh(queryDataADT qd, char * name, size_t population);
+int addNbh(queryDataADT qd, char * name, size_t population);
 
 /* Función: Almacena la información del arbol
 *  Uso: addTree(queryDataADT qd, const char * nbhName);

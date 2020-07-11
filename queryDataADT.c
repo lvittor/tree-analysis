@@ -12,35 +12,38 @@ static float truncate(float value){
 }
 
 static char * strDuplicate(const char * src) {
-    char * dst = malloc(strlen(src) + 1);   // Guarda espacio para el nuevo string.
     errno = 0;
-    if(dst == NULL || errno == ENOMEM)      // Si no hay memoria
-        perror("Error en malloc()");        // error.
-    else                                    // Si no,
-        strcpy(dst, src);                   // hace la copia
-    return dst;                             // Retorna el nuevo string
+    char * dst = malloc(strlen(src) + 1);     // Guarda espacio para el nuevo string.
+    if(dst == NULL || errno == ENOMEM) {      // Si no hay memoria
+        perror("Error en malloc()");          // error.
+        return NULL;
+    }                                         // Si no,
+    strcpy(dst, src);                         // hace la copia
+    return dst;                               // Retorna el nuevo string
 }
 
 static char * allocStringFromSize(size_t n) {
     size_t len = snprintf (NULL, 0, "%lu", n);       // Devuelve la cantidad de caracteres del numero
-    char * ans = malloc((len + 1) * sizeof(ans[0])); // Guarda espacio para el nuevo string
     errno = 0;
-    if(ans == NULL || errno == ENOMEM)               // Si no hay memoria,
+    char * ans = malloc((len + 1) * sizeof(ans[0])); // Guarda espacio para el nuevo string
+    if(ans == NULL || errno == ENOMEM) {             // Si no hay memoria,
         perror("Error en malloc()");                 // error.
-    else                                             // Si no,
-        snprintf(ans, len + 1, "%lu", n);            // Guarda como string el valor de n
+        return NULL;
+    }                                                // Si no,
+    snprintf(ans, len + 1, "%lu", n);                // Guarda como string el valor de n
     return ans;                                      // Retorna el nuevo string
 }
 
 static char * allocStringFromFloat(float f) {
     f = truncate(f);                                  // Trunca a dos decimales
     size_t len = snprintf (NULL, 0, "%.2f", f);       // Devuelve la cantidad de caracteres del numero ya truncado
-    char * ans = malloc((len + 1) * sizeof(ans[0]));  // Guarda espacio para el nuevo string
     errno = 0;
-    if(ans == NULL || errno == ENOMEM)                // Si no hay memoria,
+    char * ans = malloc((len + 1) * sizeof(ans[0]));  // Guarda espacio para el nuevo string
+    if(ans == NULL || errno == ENOMEM) {               // Si no hay memoria,
         perror("Error en malloc()");                  // error.
-    else                                              // Si no,
-        snprintf(ans, len + 1, "%.2f", f);            // Guarda como string el valor de f
+        return NULL;
+    }                                              // Si no,
+    snprintf(ans, len + 1, "%.2f", f);            // Guarda como string el valor de f
     return ans;                                       // Retorna el nuevo string
 }
 
@@ -52,74 +55,105 @@ typedef struct nbhInfo {
   size_t population;      // Su cantidad de habitantes
 } nbhInfo;
 
-// Arreglo dinámico de nbhInfo
-typedef struct nbhInfo * nbhArr;
-
-/* Nodo de nbhInfo
+/* Estructura que guarda la información necesaria para Q3
 */
-typedef struct nbhNode {
-  nbhInfo info;
-  struct nbhNode * tail;
-} nbhNode;
-
-// Lista de nbhInfo
-typedef struct nbhNode * nbhList;
-
-typedef struct treeSpecie{
+typedef struct treeSpecie {
     char * name;
     float sumDiam;
     size_t count;
-}treeSpecie;
+} treeSpecie;
 
-typedef struct treeSpecie * treeArr;
+enum {FALSE = 0, TRUE = 1};
 
-enum {UNPREPARED = 0, PREPARED = 1};
+/* Arreglo de información de barrios
+*  Se ordena para agregar árboles con binSearch
+*  Se ordena otra vez según las queries 1 y 2
+*/
+typedef struct nbhSortedArr{
+    nbhInfo * arr;   // Arreglo de barrios ordenados alfabeticamente
+    size_t dim;      // Dimensión del arreglo
+    char isSorted;   // vale TRUE o FALSE
+}nbhSortedArr;
 
-/* Estructura que almacena información y estructuras para responder las queries
+/* Arreglo de informacion de arboles
+*  Se ordena segun el criterio de la query 3
+*/
+typedef struct speciesArr{
+    treeSpecie * arr;
+    size_t dim;
+}speciesArr;
+
+/* Estructura para responder las queries
 */
 typedef struct queryDataCDT {
-    // Para las queries 1 y 2
-    nbhList firstNbh;             // Lista de barrios ordenada según criterio variable
-    size_t listDim;
-    nbhList current;              // Iterador para recorrer la lista
-    nbhInfo * nbhArr;             // Arreglo de barrios ordenados alfabeticamente
-    size_t arrDim;
-    char currQuery;               // Flag del tipo de Query
-    char arrStatus;               // PREPARED si se actualizó el arreglo despues del último addNbh, UNPREPARED sino.
-    // Para la querie 3
-    treeArr speciesArr;
-    size_t speciesCount;
-    size_t itSpecies;
+    char currQuery;     // Numero de query actual
+    struct nbhSortedArr q1_2;
+    struct speciesArr q3;
+    size_t iterQuery;
 } queryDataCDT;
+
+queryDataADT newQueryData(void){
+  errno = 0;
+  queryDataADT qd = calloc(1, sizeof(queryDataCDT));
+  if(qd == NULL || errno == ENOMEM) {
+    perror("Error en calloc()");
+    return NULL;
+  }
+  return qd;
+}
 
 /* --- Queries --- */
 typedef int (*pCompFunc)(const void *, const void *);
+typedef char ** (*pInfoQuery) (const void *, size_t *);
+
 // Query 1
 // ->{NOMBRE_BARRIO, CANT_DE_ARBOLES}
 // Se debe ordenar de manera decreciente por la cantidad de arboles.
 // Si son iguales, se prioriza el orden alfabetico de los barrios.
-int compareQ1(const void * i1, const void * i2){
+
+static int compareQ1(const void * i1, const void * i2){
     struct nbhInfo * info1 = (struct nbhInfo *)i1;
     struct nbhInfo * info2 = (struct nbhInfo *)i2;
-    int c =  info2->trees - info1->trees;
+    int c = info2->trees - info1->trees;
     if (c != 0)
         return c;
-    else
-        return strcmp( info1->name, info2->name);
+    return strcmp( info1->name, info2->name);
 }
 
-char ** infoQ1(nbhInfo nbh) {
-  char ** ans = malloc( 2 * sizeof(ans[0]) );
-  ans[0] = strDuplicate(nbh.name);
-  ans[1] = allocStringFromSize(nbh.trees); /*CANT_DE_ARBOLES a string con sprintf*/
-  return ans;
+static char ** validateStrVec(char ** arr, size_t size) {
+    if (arr == NULL)
+        return NULL;
+    //Doble for pero el tamaño esperado es size = 2
+    for (size_t i = 0; i < size; i++){
+        if (arr[i] == NULL) {
+            for (size_t j = 0; j < size; j++)
+                free(arr[j]);
+            free(arr);
+            return NULL;
+        }
+    }
+    return arr;
+}
+
+static char ** infoQ1(const void * s, size_t * size) {
+    struct nbhInfo * pNbh = (struct nbhInfo *)s;
+    *size = 2;
+    errno = 0;
+    char ** ans = malloc( (*size) * sizeof(ans[0]) );
+    if(ans == NULL || errno == ENOMEM) {
+        perror("Error en malloc()");
+        return NULL;
+    }
+    ans[0] = strDuplicate(pNbh->name);
+    ans[1] = allocStringFromSize(pNbh->trees);
+    return validateStrVec(ans, *size);
 }
 
 // Query 2
 // ->{NOMBRE_BARRIO, CANT_DE_ARBOLES/CANT_DE_HABITANTES}
 // Se debe ordenar de manera decreciente por la cantidad de arboles.
 // Si son iguales, se prioriza el orden alfabetico de los barrios.
-int compareQ2(const void * i1, const void * i2){
+static int compareQ2(const void * i1, const void * i2){
     struct nbhInfo * info1 = (struct nbhInfo *)i1;
     struct nbhInfo * info2 = (struct nbhInfo *)i2;
     float ratio1 = (float)info1->trees/info1->population;
@@ -127,22 +161,28 @@ int compareQ2(const void * i1, const void * i2){
     float c = truncate(ratio2) - truncate(ratio1);
     if(fabs(c) < EPSILON)
         return strcmp(info1->name, info2->name);
-    else
-        return (c > 0) ? 1 : -1;
+    return (c > 0) ? 1 : -1;
 }
 
 // ->{NOMBRE_BARRIO, CANT_DE_ARBOLES/CANT_DE_HABITANTES}
-char ** infoQ2(nbhInfo nbh) {
-  char ** ans = malloc( 2 * sizeof(ans[0]) );
-  ans[0] = strDuplicate(nbh.name);
-  #if DEBUG
-    printf("Valor original: %f\n", (float)nbh.trees/nbh.population);
-  #endif
-  ans[1] = allocStringFromFloat((float)nbh.trees/nbh.population);
-  return ans;
+static char ** infoQ2(const void * s, size_t * size) {
+    struct nbhInfo * pNbh = (struct nbhInfo *)s;
+    *size = 2;
+    errno = 0;
+    char ** ans = malloc( (*size) * sizeof(ans[0]) );
+    if(ans == NULL || errno == ENOMEM) {
+        perror("Error en malloc()");
+        return NULL;
+    }
+    ans[0] = strDuplicate(pNbh->name);
+    #if DEBUG
+        printf("Valor original ratio arbol/persona: %f\n", (float)pNbh->trees/pNbh->population);
+    #endif
+    ans[1] = allocStringFromFloat((float)pNbh->trees/pNbh->population);
+    return validateStrVec(ans, *size);
 }
 
-int compareQ3(const void * s1, const void * s2) {
+static int compareQ3(const void * s1, const void * s2) {
     struct treeSpecie * specie1 = (struct treeSpecie *)s1;
     struct treeSpecie * specie2 = (struct treeSpecie *)s2;
     float avDiam1 = specie1->sumDiam/specie1->count;
@@ -150,44 +190,25 @@ int compareQ3(const void * s1, const void * s2) {
     float c = truncate(avDiam2) - truncate(avDiam1);
     if (fabs(c) < EPSILON)
         return strcmp(specie1->name, specie2->name);
-    else
-        return (c < 0) ? -1 : 1;
+    return (c < 0) ? -1 : 1;
 }
 
 // ->{NOMBRE_CIENTIFICO_ARBOL, DIAM_PROMEDIO}
-char ** infoQ3(treeSpecie tree) {
-  char ** ans = malloc( 2 * sizeof(ans[0]) );
-  ans[0] = strDuplicate(tree.name);
-  ans[1] = allocStringFromFloat(tree.sumDiam/tree.count);
-  return ans;
-}
-
-queryDataADT newQueryData(void){
-  queryDataADT qd;
-  if( (qd = calloc(1, sizeof(queryDataCDT))) == NULL )
-    perror("Error en calloc()");
-  return qd;
-}
-
-static nbhList addNbhRec(nbhList list, nbhInfo * newNbh, int * ok, pCompFunc criteria) {
-  int c;
-  if (list == NULL || (c = criteria(newNbh, &list->info)) < 0) {
-    nbhNode * newNode;
-    if((newNode = malloc(sizeof(nbhNode))) == NULL ){
-      perror("Error en malloc()");
-      *ok = ERROR;
-      return list;
+static char ** infoQ3(const void * s, size_t * size) {
+    struct treeSpecie * pTree = (struct treeSpecie *)s;
+    *size = 2;
+    errno = 0;
+    char ** ans = malloc( (*size) * sizeof(ans[0]) );
+    if(ans == NULL || errno == ENOMEM) {
+        perror("Error en malloc()");
+        return NULL;
     }
-    newNode->info.trees = newNbh->trees;
-    newNode->info.population = newNbh->population;
-    newNode->info.name = strDuplicate(newNbh->name);
-    newNode->tail = list;
-    *ok = SUCCESS;
-    return newNode;
-  }
-  if( c > 0 )
-    list->tail = addNbhRec(list->tail, newNbh, ok, criteria);
-  return list;
+    ans[0] = strDuplicate(pTree->name);
+    #if DEBUG
+        printf("Valor original promedio diam: %f\n", pTree->sumDiam/pTree->count);
+    #endif
+    ans[1] = allocStringFromFloat(pTree->sumDiam/pTree->count);
+    return validateStrVec(ans, *size);
 }
 
 // Se utiliza en addNbh para dar orden alfabetico a los barrios
@@ -197,40 +218,27 @@ static int compareByName(const void * i1, const void * i2){
   return strcmp(info1->name, info2->name);
 }
 
-void addNbh(queryDataADT qd, char * name, size_t population){
-  int ok = !SUCCESS;
-  nbhInfo newNbh = { name, 0, population };
-  qd->firstNbh = addNbhRec(qd->firstNbh, &newNbh, &ok, compareByName);
-  if(ok){
-    qd->arrStatus = UNPREPARED;
-    (qd->listDim)++;
-  }
-}
-
-/* Se pasa la lista a un vector ordenado por names,
-*  donde se podrá hacer binSearch para comparar el string e
-*  incrementar la cantidad de árboles.
-*/
-static int listToArray(queryDataADT qd){
-  nbhInfo * tmp;
-  qd->arrDim = qd->listDim;
-  if((tmp = realloc(qd->nbhArr, qd->arrDim * sizeof(qd->nbhArr[0]))) == NULL){
-      perror("Error en realloc()");
-      return ERROR;
-  }
-  qd->nbhArr = tmp;
-  nbhList aux = qd->firstNbh;
-
-  // Se comparte el puntero al nombre del barrio ya que una vez seteado el nombre,
-  // no se lo modifica hasta que se libera el TAD
-  for(size_t newDim = 0; aux != NULL && newDim < qd->arrDim; newDim++) {
-    qd->nbhArr[newDim].population = aux->info.population;
-    qd->nbhArr[newDim].trees = aux->info.trees;
-    qd->nbhArr[newDim].name = strDuplicate(aux->info.name);
-
-    aux = aux->tail;
-  }
-  return SUCCESS;
+int addNbh(queryDataADT qd, char * name, size_t population){
+    for (size_t i = 0; i < qd->q1_2.dim; i++) {
+        if(strcmp(name, qd->q1_2.arr[i].name) == 0){
+            fprintf(stderr, "Error al agregar el barrio %s : ya existe.", name);
+            return ERROR;
+        }
+    }
+    errno = 0;
+    nbhInfo * tmp = realloc(qd->q1_2.arr, (qd->q1_2.dim + 1) * sizeof(tmp[0]));
+    if (tmp == NULL || errno == ENOMEM) {
+        perror("Error en realloc()");
+        return ERROR;
+    }
+    qd->q1_2.arr = tmp;
+    size_t lastIndex = (qd->q1_2.dim)++; // Guardamos el último índice y aumentamos la dimensión en 1.
+    if((qd->q1_2.arr[lastIndex].name = strDuplicate(name)) == NULL)
+        return ERROR;
+    qd->q1_2.arr[lastIndex].population = population;
+    qd->q1_2.arr[lastIndex].trees = 0;
+    qd->q1_2.isSorted = FALSE;
+    return SUCCESS;
 }
 
 /* Retorna el indice donde se encontraba nbhName en el arreglo arr.
@@ -252,168 +260,125 @@ static int binSearch(const char * nbhName, nbhInfo * arr, size_t size) {
 }
 
 static int addScientificTree(queryDataADT qd, const char * speciesName, float diam) {
-    for (size_t i = 0; i < qd->speciesCount; i++) {
-        // Si la especia ya estaba guardada,
-        if (strcmp(speciesName, qd->speciesArr[i].name) == 0) {
-            // Aumenta la cantidad
-            qd->speciesArr[i].count++;
-            // Actualiza sumatoria de diametros
-            qd->speciesArr[i].sumDiam += diam;
+    for (size_t i = 0; i < qd->q3.dim; i++) {
+        if (strcmp(speciesName, qd->q3.arr[i].name) == 0) {   // Si la especia ya estaba guardada,
+            qd->q3.arr[i].count++;                            // Aumenta la cantidad
+            qd->q3.arr[i].sumDiam += diam;                    // Actualiza sumatoria de diametros
             return SUCCESS;
         }
     }
-    // Si no habia un ejemplar anterior
-    (qd->speciesCount)++;
-    treeArr tmp = realloc(qd->speciesArr, (qd->speciesCount) * sizeof(tmp[0]));
-    if (tmp == NULL)
+
+    /* --- Si no todavía no se agregó la especie "speciesName" --- */
+    errno = 0;
+    treeSpecie * tmp = realloc(qd->q3.arr, (qd->q3.dim + 1) * sizeof(tmp[0]));
+    if (tmp == NULL || errno == ENOMEM) {
+        perror("Error en realloc()");
         return ERROR;
-    qd->speciesArr = tmp;
-    qd->speciesArr[qd->speciesCount-1].name = strDuplicate(speciesName);
-    qd->speciesArr[qd->speciesCount-1].count = 1;
-    qd->speciesArr[qd->speciesCount-1].sumDiam = diam;
+    }
+    qd->q3.arr = tmp;
+    size_t lastIndex = (qd->q3.dim)++;
+    if((qd->q3.arr[lastIndex].name = strDuplicate(speciesName)) == NULL)
+        return ERROR;
+    qd->q3.arr[lastIndex].count = 1;
+    qd->q3.arr[lastIndex].sumDiam = diam;
     return SUCCESS;
 }
 
-// Encuentra el barrio en el vector creado por listToArray e incrementa su campo tree en uno.
+static int addTreeToNbh(queryDataADT qd, const char * nbhName){
+    if (qd->q1_2.isSorted == FALSE) {
+        qsort(qd->q1_2.arr, qd->q1_2.dim, sizeof(qd->q1_2.arr[0]), compareByName); // Ordenar por nombre
+        qd->q1_2.isSorted = TRUE;
+    }
+
+    int index = binSearch(nbhName, qd->q1_2.arr, qd->q1_2.dim);
+    if(index < 0){
+        fprintf(stderr, "Error al agregar árbol: %s no existe.", nbhName);
+        return ERROR;
+    }
+    (qd->q1_2.arr[index].trees)++;
+    return SUCCESS;
+}
+
 int addTree(queryDataADT qd, const char * nbhName, const char * sciName, float diam){
-    int result = addScientificTree(qd, sciName, diam);
-    if (result == ERROR)
+    if (addScientificTree(qd, sciName, diam) == ERROR || addTreeToNbh(qd, nbhName) == ERROR)
         return ERROR;
-
-    if (qd->arrStatus == UNPREPARED){
-        qd->arrStatus = PREPARED;
-        if( listToArray(qd) == ERROR)
-            return ERROR;
-    }
-    int index = binSearch( nbhName, qd->nbhArr, qd->arrDim);
-
-    if(index >= 0)
-        (qd->nbhArr[index].trees)++;
     return SUCCESS;
-}
-
-//Libera la lista de la estructura
-static void freeList(nbhList first){
-  nbhList it = first;
-  while(it != NULL) {
-    nbhList aux = it->tail;
-    free(it->info.name);
-    free(it);
-    it = aux;
-  }
-}
-
-/* Ordena el vector siguiendo un criterio determinado de acuerdo a la query que
-* se desee (pasandole el mismo como parametro utilizando un puntero a funcion)
-*/
-static nbhList arrayToList(nbhInfo * arr, size_t size, pCompFunc criteria) {
-  int ok;
-  nbhList first = NULL;
-  for (size_t i = 0; i < size; i++) {
-    ok = !SUCCESS;
-    first = addNbhRec(first, arr + i, &ok, criteria);
-    if (ok == ERROR) {
-        freeList(first);
-        return NULL;
-    }
-  }
-  return first;
-}
-
-void toBegin(queryDataADT qd){
-  qd->current = qd->firstNbh;
-  qd->itSpecies = 0;
 }
 
 int beginQuery(queryDataADT qd, int queryNum){
     static pCompFunc compArr[QUERIES] = {compareQ1, compareQ2, compareQ3};
-    if(queryNum <= 0 || queryNum > QUERIES)
+
+    if(queryNum <= 0 || queryNum > QUERIES){
+        fprintf(stderr, "Error al hacer la query %d: no existe.", queryNum);
         return ERROR;
-
-    qd->currQuery = queryNum;
-    switch(queryNum) {
-        case 1:
-        case 2:
-            freeList(qd->firstNbh);
-            // Crear la lista ordenada de acuerdo al criterio de la query1
-            qd->firstNbh = arrayToList(qd->nbhArr, qd->listDim, compArr[queryNum-1]);
-            if(qd->firstNbh == NULL)
-                return ERROR;
-            // Setear iterador a head
-            toBegin(qd);
-            return SUCCESS;
-        case 3:
-            qsort(qd->speciesArr, qd->speciesCount, sizeof(struct treeSpecie), compArr[queryNum-1]);
-            qd->itSpecies = 0;
-            #if DEBUG
-                printf("Cantidad de especies encontradas: %lu\n\n", qd->speciesCount);
-            #endif
-            return SUCCESS;
-        default:
-            return ERROR;
-
     }
+
+    qd->iterQuery = 0;
+    qd->currQuery = queryNum;
+    switch(qd->currQuery) {
+        case 1: case 2:
+            qsort(qd->q1_2.arr, qd->q1_2.dim, sizeof(qd->q1_2.arr[0]), compArr[qd->currQuery-1]);
+            break;
+        case 3:
+            qsort(qd->q3.arr, qd->q3.dim, sizeof(qd->q3.arr[0]), compArr[qd->currQuery-1]);
+            #if DEBUG
+                printf("Cantidad de especies encontradas: %lu\n\n", qd->q3.dim);
+            #endif
+            break;
+    }
+
+    return SUCCESS;
 }
 
 int hasNext(queryDataADT qd) {
     switch(qd->currQuery) {
-        case 1:
-        case 2:
-            return qd->current != NULL;
+        case 1: case 2:
+            return qd->iterQuery < qd->q1_2.dim;
         case 3:
-            return qd->itSpecies != qd->speciesCount;
-        default:
-            return ERROR;
+            return qd->iterQuery < qd->q3.dim;
     }
+    return 0;
 }
 
 char ** answer(queryDataADT qd, size_t * size) {
-  if(! hasNext(qd)){
-    fprintf(stderr, "Query data has not next\n");
-    exit(1); //no abortar en backend
-  }
-  char ** ans;
-  switch(qd->currQuery) {
-    case 1:
-      //BARRIO;CANT_ARBOLES
-      ans = infoQ1(qd->current->info);
-      *size = 2;
-      qd->current = qd->current->tail;
-      break;
-    case 2:
-      // BARRIO;CANT_ARBOLES/HABITANTES
-      ans = infoQ2(qd->current->info);
-      *size = 2;
-      qd->current = qd->current->tail;
-      break;
-    case 3:
-      // NOMBRE_CIENTIFICO;DIAM_PROMEDIO
-      ans = infoQ3(qd->speciesArr[qd->itSpecies]);
-      *size = 2;
-      qd->itSpecies++;
-      break;
-    default:
-      return NULL;
-  }
+    static pInfoQuery getInfo[QUERIES] = {infoQ1, infoQ2, infoQ3};
 
-  return ans;
+    if(! hasNext(qd)){
+        fprintf(stderr, "No hay datos para acceder.\n");
+        return NULL;
+    }
+
+    char ** ans;
+    switch(qd->currQuery) {
+        case 1: case 2:
+            //BARRIO;CANT_ARBOLES o BARRIO;CANT_ARBOLES/HABITANTES
+            ans = getInfo[qd->currQuery - 1](&(qd->q1_2.arr[qd->iterQuery]), size);
+            break;
+        case 3:
+            // NOMBRE_CIENTIFICO;DIAM_PROMEDIO
+            ans = getInfo[qd->currQuery - 1](&(qd->q3.arr[qd->iterQuery]), size);
+            break;
+    }
+    if(ans != NULL) // si se pudo obtener informacion de la query
+        (qd->iterQuery)++; 
+    
+    return ans;
 }
 
-static void freeNbhArr(nbhArr arr, size_t size){
+static void freeNbhArr(nbhInfo * arr, size_t size){
   for (size_t i = 0; i < size; i++)
     free(arr[i].name);
   free(arr);
 }
 
-static void freeSpeciesArr(treeArr arr, size_t size){
+static void freeSpeciesArr(treeSpecie * arr, size_t size){
   for (size_t i = 0; i < size; i++)
     free(arr[i].name);
   free(arr);
 }
 
 void freeQueryData(queryDataADT qd) {
-  freeList(qd->firstNbh);
-  freeNbhArr(qd->nbhArr, qd->arrDim);
-  freeSpeciesArr(qd->speciesArr, qd->speciesCount);
+  freeNbhArr(qd->q1_2.arr, qd->q1_2.dim);
+  freeSpeciesArr(qd->q3.arr, qd->q3.dim);
   free(qd);
 }
