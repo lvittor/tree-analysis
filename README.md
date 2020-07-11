@@ -25,6 +25,7 @@ Para el caso de BUE:
   $./arbolesADTBUE arbolesBUE.csv barriosBUE.csv
 ```
 El ejecutable arbolesADTBUE tiene configurado que los datos se encuentran distribuidos de acuerdo a:
+
     barriosBUE.csv:
         * "nombre" en columna 1
         * "habitantes" en columna 2
@@ -39,6 +40,7 @@ Para el caso de VAN:
   $./arbolesADTVAN arbolesVAN.csv barriosVAN.csv
 ```
 El ejecutable arbolesADTVAN tiene configurado los datos se encuentran distribuidos de acuerdo a:
+
     barriosBUE.csv:
         * "nombres" en columna 1
         * "habitantes" en columna 2
