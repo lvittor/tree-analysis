@@ -360,8 +360,8 @@ char ** answer(queryDataADT qd, size_t * size) {
             break;
     }
     if(ans != NULL) // si se pudo obtener informacion de la query
-        (qd->iterQuery)++;
-
+        (qd->iterQuery)++; 
+    
     return ans;
 }
 

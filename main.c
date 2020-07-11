@@ -12,7 +12,7 @@
 /* Número de columna de Comuna, Nombre cientifico, Diametro en arboles.csv
 *  Necesariamente de menor a mayor
 */
-#ifdef BUE  // Determina si esta en modo BUE o VAN
+#ifdef BUE  
     size_t treePos[FIELDS_TREE] = {2, 7, 11};
     enum {TREE_NBH = 0, TREE_SCI_NAME, TREE_DIAM};
 #elif VAN
@@ -50,8 +50,7 @@ int main(int argc, char *argv[]) {
 
     /* --- Lectura de datos de barrios.csv ---*/
 
-    file = fopen(nbhCSVPath, "r");
-    if(file == NULL){
+    if((file = fopen(nbhCSVPath, "r")) == NULL){
         perror("Error leyendo el archivo de barrios");
         return 1;
     }
@@ -64,15 +63,14 @@ int main(int argc, char *argv[]) {
             printArrayOfStrings(rowData, FIELDS_NBH);
         #endif
         addNbh(qd, rowData[NBH_NAME], atoi(rowData[NBH_POP])); // Buscar funcion string to unsigned
-        freeVec(rowData, FIELDS_NBH);
+        free(rowData);
     }
 
     fclose(file);
 
     /* --- Lectura de datos de arboles.csv --- */
 
-    file = fopen(treeCSVPath, "r");
-    if(file == NULL){
+    if((file = fopen(treeCSVPath, "r")) == NULL){
         perror("Error leyendo el archivo de arboles");
         return 1;
     }
@@ -85,7 +83,7 @@ int main(int argc, char *argv[]) {
             printArrayOfStrings(rowData, FIELDS_TREE);
         #endif
         addTree(qd, rowData[TREE_NBH], rowData[TREE_SCI_NAME], atof(rowData[TREE_DIAM]));
-        freeVec(rowData, FIELDS_TREE);
+        free(rowData);
     }
 
     fclose(file);
@@ -99,8 +97,10 @@ int main(int argc, char *argv[]) {
         snprintf(outputName, MAX_OUTPUT_NAME, "query%d.csv", i);
         file = fopen(outputName, "w");
 
-        if(beginQuery(qd, i) == ERROR) //si hay error hacer freeQueryData
+        if(beginQuery(qd, i) == ERROR){
+            freeQueryData(qd);
             return 1;
+        }
 
         fprintf(file, "%s\n", headers[i-1]);
 
