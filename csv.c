@@ -7,8 +7,8 @@
 #define TRUE_DEL DELIMITER "\n"
 
 char ** readCSVColumns(char * line, const size_t * desiredColumns, size_t quantity) {
-    char ** ans = calloc(quantity, sizeof(ans[0]));
     errno = 0;
+    char ** ans = calloc(quantity, sizeof(ans[0]));
     if(ans == NULL || errno == ENOMEM){
         perror("Error en calloc()");
         return NULL;
