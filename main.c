@@ -12,7 +12,7 @@
 /* Número de columna de Comuna, Nombre cientifico, Diametro en arboles.csv
 *  Necesariamente de menor a mayor
 */
-#ifdef BUE  
+#ifdef BUE
     size_t treePos[FIELDS_TREE] = {2, 7, 11};
     enum {TREE_NBH = 0, TREE_SCI_NAME, TREE_DIAM};
 #elif VAN
@@ -41,6 +41,11 @@ void printArrayOfStrings(char ** strArr, size_t size);
 void freeVec(char ** vec, size_t size);
 
 int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        fprintf(stderr, "Debe pasar exactamente 2 argumentos.\n");
+        return 1;
+    }
+
     char * treeCSVPath = argv[1];
     char * nbhCSVPath  = argv[2];
 
@@ -52,6 +57,7 @@ int main(int argc, char *argv[]) {
 
     if((file = fopen(nbhCSVPath, "r")) == NULL){
         perror("Error leyendo el archivo de barrios");
+        freeQueryData(qd);
         return 1;
     }
 
@@ -62,7 +68,11 @@ int main(int argc, char *argv[]) {
             printf("Se leyo el barrio:\n");
             printArrayOfStrings(rowData, FIELDS_NBH);
         #endif
-        addNbh(qd, rowData[NBH_NAME], atoi(rowData[NBH_POP])); // Buscar funcion string to unsigned
+        if (addNbh(qd, rowData[NBH_NAME], atoi(rowData[NBH_POP])) == ERROR) {
+            fclose(file);
+            freeQueryData(qd);
+            return 1;
+        }
         free(rowData);
     }
 
@@ -72,6 +82,7 @@ int main(int argc, char *argv[]) {
 
     if((file = fopen(treeCSVPath, "r")) == NULL){
         perror("Error leyendo el archivo de arboles");
+        freeQueryData(qd);
         return 1;
     }
 
@@ -82,7 +93,11 @@ int main(int argc, char *argv[]) {
             printf("Se leyo el arbol:\n");
             printArrayOfStrings(rowData, FIELDS_TREE);
         #endif
-        addTree(qd, rowData[TREE_NBH], rowData[TREE_SCI_NAME], atof(rowData[TREE_DIAM]));
+        if (addTree(qd, rowData[TREE_NBH], rowData[TREE_SCI_NAME], atof(rowData[TREE_DIAM])) == ERROR) {
+            fclose(file);
+            freeQueryData(qd);
+            return 1;
+        }
         free(rowData);
     }
 
@@ -98,6 +113,7 @@ int main(int argc, char *argv[]) {
         file = fopen(outputName, "w");
 
         if(beginQuery(qd, i) == ERROR){
+            fclose(file);
             freeQueryData(qd);
             return 1;
         }
@@ -107,6 +123,11 @@ int main(int argc, char *argv[]) {
         size_t size;
         while(hasNext(qd)) {
             char ** ans = answer(qd, &size);
+            if (ans == NULL) {
+                fclose(file);
+                freeQueryData(qd);
+                return 1;
+            }
             #if DEBUG
                 printArrayOfStrings(ans, size);
             #endif
