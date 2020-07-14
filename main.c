@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     char * nbhCSVPath = argv[2];
 
     char line[MAX_BUFF];
-    FILE * file;
+    FILE * file = NULL;
     queryDataADT qd = newQueryData();
     if (qd == NULL)
         return RETURN_ERROR;
@@ -64,8 +64,7 @@ int main(int argc, char *argv[]) {
 
     if((file = fopen(nbhCSVPath, "r")) == NULL){
         perror("Error leyendo el archivo de barrios");
-        freeQueryData(qd);
-        return RETURN_ERROR;
+        return safeExit(qd, file);
     }
 
     fgets(line, MAX_BUFF, file); // remueve el header del .csv
@@ -86,8 +85,7 @@ int main(int argc, char *argv[]) {
 
     if((file = fopen(treeCSVPath, "r")) == NULL){
         perror("Error leyendo el archivo de arboles");
-        freeQueryData(qd);
-        return RETURN_ERROR;
+        return safeExit(qd, file);
     }
 
     fgets(line, MAX_BUFF, file); // remueve el header del .csv
@@ -114,10 +112,10 @@ int main(int argc, char *argv[]) {
 
         if ( (file = fopen(outputName, "w")) == NULL) {
             perror("Error creando el archivo de salida");
-            return RETURN_ERROR;
+            return safeExit(qd, file);
         }
 
-        if(beginQuery(qd, i) == ERROR)
+        if (beginQuery(qd, i) == ERROR)
             return safeExit(qd, file);
 
         fprintf(file, "%s\n", headers[i-1]);
