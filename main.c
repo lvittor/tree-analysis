@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h> // VER SI HACE FALTA ACA O PONERLO EN qdADT.h
+#include <errno.h>
 #include "csv.h"
 #include "queryDataADT.h"
 
 #define MAX_OUTPUT_NAME 15 // Tamaño maximo del nombre del archivo de salida
 #define MAX_BUFF 1024    // Tamaño maximo del buffer de lectura
 
-#define RETURN_ERROR    1
+#define RETURN_ERROR 1
 
 #define FIELDS_TREE 3 // Cantidad de campos relevantes a leer de arboles.csv
 
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
     }
 
     char * treeCSVPath = argv[1];
-    char * nbhCSVPath  = argv[2];
+    char * nbhCSVPath = argv[2];
 
     char line[MAX_BUFF];
     FILE * file;
@@ -70,14 +70,14 @@ int main(int argc, char *argv[]) {
 
     fgets(line, MAX_BUFF, file); // remueve el header del .csv
     while(fgets(line, MAX_BUFF, file) != NULL) {
-        char ** rowData = readCSVColumns(line, nbhPos, FIELDS_NBH);
+        char * rowData[FIELDS_NBH];
+        readCSVColumns(line, nbhPos, FIELDS_NBH, rowData);
         #if DEBUG
             printf("Se leyo el barrio:\n");
             printArrayOfStrings(rowData, FIELDS_NBH);
         #endif
         if (addNbh(qd, rowData[NBH_NAME], atoi(rowData[NBH_POP])) == ERROR)
             return safeExit(qd, file);
-        free(rowData);
     }
 
     fclose(file);
@@ -92,14 +92,14 @@ int main(int argc, char *argv[]) {
 
     fgets(line, MAX_BUFF, file); // remueve el header del .csv
     while(fgets(line, MAX_BUFF, file) != NULL) {
-        char ** rowData = readCSVColumns(line, treePos, FIELDS_TREE);
+        char * rowData[FIELDS_TREE];
+        readCSVColumns(line, treePos, FIELDS_TREE, rowData);
         #if DEBUG
             printf("Se leyo el arbol:\n");
             printArrayOfStrings(rowData, FIELDS_TREE);
         #endif
         if (addTree(qd, rowData[TREE_NBH], rowData[TREE_SCI_NAME], atof(rowData[TREE_DIAM])) == ERROR)
             return safeExit(qd, file);
-        free(rowData);
     }
 
     fclose(file);

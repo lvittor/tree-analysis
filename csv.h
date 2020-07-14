@@ -14,7 +14,7 @@
 *  Descripción: Devuelve un vector de punteros a char que contenga los campos (columnas) especificadas en desiredColumns.
 *  quantity es la dimension de desiredColumns y este arreglo debe estar ordenado ascendentemente.
 */
-char ** readCSVColumns(char * line, const size_t * desiredColumns, size_t quantity);
+void readCSVColumns(char * line, const size_t * desiredColumns, size_t quantity, char * output[]);
 
 /* Función: Escribe en el archivo .csv (file) el arreglo pasado por parametro (arr) con dimension (size).
 *  Uso: -
