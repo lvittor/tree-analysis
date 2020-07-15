@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
 
     fclose(file);
 
-    for (size_t i = 1; i <= QUERIES; i++) {
+    for (unsigned int i = 1; i <= QUERIES; i++) {
         #if DEBUG
             printf("\n--------- QUERY %d ---------\n", i);
         #endif
