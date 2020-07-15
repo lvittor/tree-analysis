@@ -6,25 +6,16 @@
 
 #define TRUE_DEL DELIMITER "\n"
 
-char ** readCSVColumns(char * line, const size_t * desiredColumns, size_t quantity) {
-    errno = 0;
-    char ** ans = calloc(quantity, sizeof(ans[0]));
-    if(ans == NULL || errno == ENOMEM){
-        perror("Error en calloc()");
-        return NULL;
-    }
-
+void readCSVColumns(char * line, const size_t * desiredColumns, size_t quantity, char * output[]) {
     char * token = strtok(line, TRUE_DEL); // no verificamos token, asumimos formato correcto.
 
     size_t currField = 0, currCol = 0;
     do {
         if (desiredColumns[currField] == currCol)
-          ans[currField++] = token;
+          output[currField++] = token;
 
         currCol++;
     } while(currField < quantity && (token = strtok(NULL, TRUE_DEL)) != NULL);  // no verificamos token, asumimos formato correcto.
-
-    return ans;
 }
 
 void writeCSVLine(FILE * file, char ** arr, size_t size) {

@@ -10,15 +10,20 @@
 #define DELIMITER ";"
 
 /* Función: Permite extraer del .csv los campos (columnas) de la linea actual.
-*  Uso: rowData = getColumns(line, desiredColumns, quantity)
-*  Descripción: Devuelve un vector de punteros a char que contenga los campos (columnas) especificadas en desiredColumns.
-*  quantity es la dimension de desiredColumns y este arreglo debe estar ordenado ascendentemente.
+*  Uso: getColumns(line, desiredColumns, quantity, output)
+*  Descripción: Guarda en output punteros a char de las direcciones en line
+*  donde comienzan los campos (columnas) especificados en desiredColumns.
+*  quantity debe ser la dimensión de desiredColumns y de output.
+*  desiredColumns debe estar ordenado ascendentemente.
+*  line debe terminar en '\n'.
+*  Se reemplazan las apariciones de DELIMITER y el '\n' por '\0'.
 */
-char ** readCSVColumns(char * line, const size_t * desiredColumns, size_t quantity);
+void readCSVColumns(char * line, const size_t * desiredColumns, size_t quantity, char * output[]);
 
 /* Función: Escribe en el archivo .csv (file) el arreglo pasado por parametro (arr) con dimension (size).
 *  Uso: -
-*  Descripción: -
+*  Descripción: Interpreta el arreglo como uno de strings.
+*  Escribe en file cada string del arreglo separado por DELIMITER y terminando con '\n'.
 */
 void writeCSVLine(FILE * file, char ** arr, size_t size);
 
