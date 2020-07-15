@@ -14,10 +14,8 @@ static float truncate(float value){
 static char * strDuplicate(const char * src) {
     errno = 0;
     char * dst = malloc(strlen(src) + 1);     // Guarda espacio para el nuevo string.
-    if(dst == NULL || errno == ENOMEM) {      // Si no hay memoria
-        perror("Error en malloc()");          // error.
+    if(dst == NULL || errno == ENOMEM)       // Si no hay memoria 
         return NULL;
-    }                                         // Si no,
     strcpy(dst, src);                         // hace la copia
     return dst;                               // Retorna el nuevo string
 }
@@ -26,10 +24,8 @@ static char * allocStringFromSize(size_t n) {
     size_t len = snprintf (NULL, 0, "%lu", n);       // Devuelve la cantidad de caracteres del numero
     errno = 0;
     char * ans = malloc((len + 1) * sizeof(ans[0])); // Guarda espacio para el nuevo string
-    if(ans == NULL || errno == ENOMEM) {             // Si no hay memoria,
-        perror("Error en malloc()");                 // error.
+    if(ans == NULL || errno == ENOMEM)              // Si no hay memoria
         return NULL;
-    }                                                // Si no,
     snprintf(ans, len + 1, "%lu", n);                // Guarda como string el valor de n
     return ans;                                      // Retorna el nuevo string
 }
@@ -39,12 +35,25 @@ static char * allocStringFromFloat(float f) {
     size_t len = snprintf (NULL, 0, "%.2f", f);       // Devuelve la cantidad de caracteres del numero ya truncado
     errno = 0;
     char * ans = malloc((len + 1) * sizeof(ans[0]));  // Guarda espacio para el nuevo string
-    if(ans == NULL || errno == ENOMEM) {               // Si no hay memoria,
-        perror("Error en malloc()");                  // error.
+    if(ans == NULL || errno == ENOMEM)                // Si no hay memoria,
         return NULL;
-    }                                              // Si no,
     snprintf(ans, len + 1, "%.2f", f);            // Guarda como string el valor de f
     return ans;                                       // Retorna el nuevo string
+}
+
+static char ** validateStrVec(char ** arr, size_t size) {
+    if (arr == NULL)
+        return NULL;
+    //Doble for pero el tamaño esperado es size = 2
+    for (size_t i = 0; i < size; i++){
+        if (arr[i] == NULL) {
+            for (size_t j = 0; j < size; j++)
+                free(arr[j]);
+            free(arr);
+            return NULL;
+        }
+    }
+    return arr;
 }
 
 /* Estructura que guarda la información necesaria para Q1 y Q2
@@ -95,10 +104,8 @@ typedef struct queryDataCDT {
 queryDataADT newQueryData(void){
   errno = 0;
   queryDataADT qd = calloc(1, sizeof(queryDataCDT));
-  if(qd == NULL || errno == ENOMEM) {
-    perror("Error en calloc()");
+  if(qd == NULL || errno == ENOMEM) 
     return NULL;
-  }
   return qd;
 }
 
@@ -120,30 +127,13 @@ static int compareQ1(const void * i1, const void * i2){
     return strcmp( info1->name, info2->name);
 }
 
-static char ** validateStrVec(char ** arr, size_t size) {
-    if (arr == NULL)
-        return NULL;
-    //Doble for pero el tamaño esperado es size = 2
-    for (size_t i = 0; i < size; i++){
-        if (arr[i] == NULL) {
-            for (size_t j = 0; j < size; j++)
-                free(arr[j]);
-            free(arr);
-            return NULL;
-        }
-    }
-    return arr;
-}
-
 static char ** infoQ1(const void * s, size_t * size) {
     struct nbhInfo * pNbh = (struct nbhInfo *)s;
     *size = 2;
     errno = 0;
     char ** ans = malloc( (*size) * sizeof(ans[0]) );
-    if(ans == NULL || errno == ENOMEM) {
-        perror("Error en malloc()");
+    if(ans == NULL || errno == ENOMEM)
         return NULL;
-    }
     ans[0] = strDuplicate(pNbh->name);
     ans[1] = allocStringFromSize(pNbh->trees);
     return validateStrVec(ans, *size);
@@ -156,6 +146,13 @@ static char ** infoQ1(const void * s, size_t * size) {
 static int compareQ2(const void * i1, const void * i2){
     struct nbhInfo * info1 = (struct nbhInfo *)i1;
     struct nbhInfo * info2 = (struct nbhInfo *)i2;
+    if(info1->population == 0 && info2->population == 0)
+        return strcmp(info1->name, info2->name);
+    else if(info1->population == 0)
+        return -1;
+    else if(info2->population == 0)
+        return 1;
+
     float ratio1 = (float)info1->trees/info1->population;
     float ratio2 = (float)info2->trees/info2->population;
     float c = truncate(ratio2) - truncate(ratio1);
@@ -170,27 +167,35 @@ static char ** infoQ2(const void * s, size_t * size) {
     *size = 2;
     errno = 0;
     char ** ans = malloc( (*size) * sizeof(ans[0]) );
-    if(ans == NULL || errno == ENOMEM) {
-        perror("Error en malloc()");
+    if(ans == NULL || errno == ENOMEM)
         return NULL;
-    }
     ans[0] = strDuplicate(pNbh->name);
     #if DEBUG
         printf("Valor original ratio arbol/persona: %f\n", (float)pNbh->trees/pNbh->population);
     #endif
-    ans[1] = allocStringFromFloat((float)pNbh->trees/pNbh->population);
+    if(pNbh->population == 0)
+        ans[1] = strDuplicate("NaN");
+    else
+        ans[1] = allocStringFromFloat((float)pNbh->trees/pNbh->population);
     return validateStrVec(ans, *size);
 }
 
 static int compareQ3(const void * s1, const void * s2) {
     struct treeSpecie * specie1 = (struct treeSpecie *)s1;
     struct treeSpecie * specie2 = (struct treeSpecie *)s2;
+    if(specie1->count == 0 && specie2->count == 0)
+        return strcmp(specie1->name, specie2->name);
+    else if(specie1->count == 0)
+        return -1;
+    else if(specie2->count == 0)
+        return 1;
+        
     float avDiam1 = specie1->sumDiam/specie1->count;
     float avDiam2 = specie2->sumDiam/specie2->count;
     float c = truncate(avDiam2) - truncate(avDiam1);
     if (fabs(c) < EPSILON)
         return strcmp(specie1->name, specie2->name);
-    return (c < 0) ? -1 : 1;
+    return (c > 0) ? 1 : -1;
 }
 
 // ->{NOMBRE_CIENTIFICO_ARBOL, DIAM_PROMEDIO}
@@ -199,15 +204,16 @@ static char ** infoQ3(const void * s, size_t * size) {
     *size = 2;
     errno = 0;
     char ** ans = malloc( (*size) * sizeof(ans[0]) );
-    if(ans == NULL || errno == ENOMEM) {
-        perror("Error en malloc()");
+    if(ans == NULL || errno == ENOMEM)
         return NULL;
-    }
     ans[0] = strDuplicate(pTree->name);
     #if DEBUG
         printf("Valor original promedio diam: %f\n", pTree->sumDiam/pTree->count);
     #endif
-    ans[1] = allocStringFromFloat(pTree->sumDiam/pTree->count);
+    if(pTree->count == 0)
+        ans[1] = strDuplicate("NaN");
+    else
+        ans[1] = allocStringFromFloat(pTree->sumDiam/pTree->count);
     return validateStrVec(ans, *size);
 }
 
@@ -220,21 +226,17 @@ static int compareByName(const void * i1, const void * i2){
 
 int addNbh(queryDataADT qd, char * name, size_t population){
     for (size_t i = 0; i < qd->q1_2.dim; i++) {
-        if(strcmp(name, qd->q1_2.arr[i].name) == 0){
-            fprintf(stderr, "Error al agregar el barrio %s : ya existe.", name);
-            return ERROR;
-        }
+        if(strcmp(name, qd->q1_2.arr[i].name) == 0)
+            return REPEATED_ERROR;
     }
     errno = 0;
     nbhInfo * tmp = realloc(qd->q1_2.arr, (qd->q1_2.dim + 1) * sizeof(tmp[0]));
-    if (tmp == NULL || errno == ENOMEM) {
-        perror("Error en realloc()");
-        return ERROR;
-    }
+    if (tmp == NULL || errno == ENOMEM)
+        return ALLOC_ERROR;
     qd->q1_2.arr = tmp;
     size_t lastIndex = (qd->q1_2.dim)++; // Guardamos el último índice y aumentamos la dimensión en 1.
     if((qd->q1_2.arr[lastIndex].name = strDuplicate(name)) == NULL)
-        return ERROR;
+        return ALLOC_ERROR;
     qd->q1_2.arr[lastIndex].population = population;
     qd->q1_2.arr[lastIndex].trees = 0;
     qd->q1_2.isSorted = FALSE;
@@ -271,14 +273,12 @@ static int addScientificTree(queryDataADT qd, const char * speciesName, float di
     /* --- Si no todavía no se agregó la especie "speciesName" --- */
     errno = 0;
     treeSpecie * tmp = realloc(qd->q3.arr, (qd->q3.dim + 1) * sizeof(tmp[0]));
-    if (tmp == NULL || errno == ENOMEM) {
-        perror("Error en realloc()");
-        return ERROR;
-    }
+    if (tmp == NULL || errno == ENOMEM) 
+        return ALLOC_ERROR;
     qd->q3.arr = tmp;
     size_t lastIndex = (qd->q3.dim)++;
     if((qd->q3.arr[lastIndex].name = strDuplicate(speciesName)) == NULL)
-        return ERROR;
+        return ALLOC_ERROR;
     qd->q3.arr[lastIndex].count = 1;
     qd->q3.arr[lastIndex].sumDiam = diam;
     return SUCCESS;
@@ -291,16 +291,15 @@ static int addTreeToNbh(queryDataADT qd, const char * nbhName){
     }
 
     int index = binSearch(nbhName, qd->q1_2.arr, qd->q1_2.dim);
-    if(index < 0){
-        fprintf(stderr, "Error al agregar árbol: %s no existe.", nbhName);
-        return ERROR;
-    }
+    if(index < 0)
+        return NO_INDEX;
+        
     (qd->q1_2.arr[index].trees)++;
     return SUCCESS;
 }
 
 int addTree(queryDataADT qd, const char * nbhName, const char * sciName, float diam){
-    if (addScientificTree(qd, sciName, diam) == ERROR || addTreeToNbh(qd, nbhName) == ERROR)
+    if (addScientificTree(qd, sciName, diam) == ALLOC_ERROR || addTreeToNbh(qd, nbhName) == NO_INDEX)
         return ERROR;
     return SUCCESS;
 }
@@ -308,10 +307,8 @@ int addTree(queryDataADT qd, const char * nbhName, const char * sciName, float d
 int beginQuery(queryDataADT qd, int queryNum){
     static pCompFunc compArr[QUERIES] = {compareQ1, compareQ2, compareQ3};
 
-    if(queryNum <= 0 || queryNum > QUERIES){
-        fprintf(stderr, "Error al hacer la query %d: no existe.", queryNum);
-        return ERROR;
-    }
+    if(queryNum <= 0 || queryNum > QUERIES)
+        return NO_QUERY_VALUE;
 
     qd->iterQuery = 0;
     qd->currQuery = queryNum;
@@ -343,10 +340,8 @@ int hasNext(queryDataADT qd) {
 char ** answer(queryDataADT qd, size_t * size) {
     static pInfoQuery getInfo[QUERIES] = {infoQ1, infoQ2, infoQ3};
 
-    if(! hasNext(qd)){
-        fprintf(stderr, "No hay datos para acceder.\n");
+    if( ! hasNext(qd) )
         return NULL;
-    }
 
     char ** ans;
     switch(qd->currQuery) {

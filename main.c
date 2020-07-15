@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include "csv.h"
 #include "queryDataADT.h"
 
@@ -57,13 +56,14 @@ int main(int argc, char *argv[]) {
     char line[MAX_BUFF];
     FILE * file = NULL;
     queryDataADT qd = newQueryData();
-    if (qd == NULL)
-        return RETURN_ERROR;
-
+    if (qd == NULL){
+        fprintf(stderr, "No se pudo generar el queryData.\n");
+        return safeExit(qd, file);
+    }
     /* --- Lectura de datos de barrios.csv ---*/
 
     if((file = fopen(nbhCSVPath, "r")) == NULL){
-        perror("Error leyendo el archivo de barrios");
+        fprintf(stderr, "Error leyendo el archivo de barrios.\n");
         return safeExit(qd, file);
     }
 
@@ -75,8 +75,11 @@ int main(int argc, char *argv[]) {
             printf("Se leyo el barrio:\n");
             printArrayOfStrings(rowData, FIELDS_NBH);
         #endif
-        if (addNbh(qd, rowData[NBH_NAME], atoi(rowData[NBH_POP])) == ERROR)
+        int aux = addNbh(qd, rowData[NBH_NAME], atoi(rowData[NBH_POP]));
+        if(aux == ALLOC_ERROR || aux == REPEATED_ERROR){
+            fprintf(stderr, "No se pudo agregar el barrio.\n");
             return safeExit(qd, file);
+        }
     }
 
     fclose(file);
@@ -84,48 +87,54 @@ int main(int argc, char *argv[]) {
     /* --- Lectura de datos de arboles.csv --- */
 
     if((file = fopen(treeCSVPath, "r")) == NULL){
-        perror("Error leyendo el archivo de arboles");
+        fprintf(stderr, "Error leyendo el archivo de arboles.\n");
         return safeExit(qd, file);
     }
 
     fgets(line, MAX_BUFF, file); // remueve el header del .csv
     while(fgets(line, MAX_BUFF, file) != NULL) {
-        char * rowData[FIELDS_TREE];
-        readCSVColumns(line, treePos, FIELDS_TREE, rowData);
+        char * rowData[FIELDS_TREE];                         
+        readCSVColumns(line, treePos, FIELDS_TREE, rowData);   //Asumimos formato correcto y no validamos rowData
         #if DEBUG
             printf("Se leyo el arbol:\n");
             printArrayOfStrings(rowData, FIELDS_TREE);
         #endif
-        if (addTree(qd, rowData[TREE_NBH], rowData[TREE_SCI_NAME], atof(rowData[TREE_DIAM])) == ERROR)
+        if (addTree(qd, rowData[TREE_NBH], rowData[TREE_SCI_NAME], atof(rowData[TREE_DIAM])) == ERROR){
+            fprintf(stderr, "No se pudo agregar el arbol.\n");
             return safeExit(qd, file);
+        }
     }
 
     fclose(file);
 
-    for (unsigned int i = 1; i <= QUERIES; i++) {
+    for (size_t i = 1; i <= QUERIES; i++) {
         #if DEBUG
             printf("\n--------- QUERY %d ---------\n", i);
         #endif
+        file = NULL;
 
+        if (beginQuery(qd, i) == NO_QUERY_VALUE){
+            fprintf(stderr, "No se pudo leer la query.\n");
+            return safeExit(qd, file);
+        }
+        
         char outputName[MAX_OUTPUT_NAME];
         snprintf(outputName, MAX_OUTPUT_NAME, "query%d.csv", i);
 
-        if ( (file = fopen(outputName, "w")) == NULL) {
-            perror("Error creando el archivo de salida");
+        if ((file = fopen(outputName, "w")) == NULL) {
+            fprintf(stderr, "Error creando el archivo de salida");
             return safeExit(qd, file);
         }
-
-        if (beginQuery(qd, i) == ERROR)
-            return safeExit(qd, file);
 
         fprintf(file, "%s\n", headers[i-1]);
 
         size_t size;
         while(hasNext(qd)) {
             char ** ans = answer(qd, &size);
-            if (ans == NULL)
+            if (ans == NULL){
+                fprintf(stderr, "No se pudo obtener la respuesta.\n");
                 return safeExit(qd, file);
-
+            }
             #if DEBUG
                 printArrayOfStrings(ans, size);
             #endif
