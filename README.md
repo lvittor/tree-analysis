@@ -62,26 +62,89 @@ cada línea representa un barrio.
 ## Queries 
 
 Una vez recibido correctamente los path de los archivos CSV, el programa resuelve las consultas que se listan a continuación, dejando los resultados de cada
-una en archivos queryN.csv y localizados en el mismo directorio que el ejecutable.
+una en archivos queryN.csv y localizados en el mismo directorio que el ejecutable. Sólo se listan los barrios presentes en el archivo CSV de barrios.
 
 ### Total de árboles por barrio (query1.csv)
-
-Cada línea de la salida contiene, separados por “;” el nombre del barrio y el total de árboles pertenecientes a ese barrio.
-Sólo se listan los barrios presentes en el archivo CSV de barrios.
-El orden de impresión es descendente por cantidad de árboles y luego alfabético por nombre de barrio.
+```
+❖ Fromato de salida: ​NOMBRE DEL BARRIO;TOTAL DE ARBOLES DEL BARRIO
+● Orden de impresión ​:​ Descendente por cantidad de árboles y luego alfabético por nombre de barrio. 
+```
+Ejemplo de salida para :argentina: :
+```
+BARRIO;ARBOLES
+11;35620
+12;34118
+9;33601
+10;31012
+4;29946
+...
+```
+Ejemplo de salida para :canada: :
+```
+BARRIO;ARBOLES
+KENSINGTON-CEDAR COTTAGE;10012
+HASTINGS-SUNRISE;9128
+RENFREW-COLLINGWOOD;9128
+DUNBAR-SOUTHLANDS;8289
+SUNSET;6223
+...
+```
 
 ### Total de árboles por habitante (query2.csv)
 
-Cada línea de la salida contiene, separados por “;” el nombre del barrio y el total de árboles por habitante (que consiste en el cociente entre el total de árboles de ese barrio y el número de habitantes del mismo).
-Sólo se listan los barrios presentes en el archivo CSV de barrios.
-El orden de impresión es descendente por el total de árboles por habitante y luego alfabético por nombre de barrio.
-El total de árboles por habitante se imprime truncado a dos decimales.
+```
+❖ Fromato de salida: ​NOMBRE DEL BARRIO;TOTAL DE ARBOLES POR HABITANTE
+  → TOTAL DE ARBOLES POR HABITANTE consiste en el cociente entre el total de árboles de ese barrio y el número de habitantes del mismo
+  → TOTAL DE ARBOLES POR HABITANTE se imprime truncado a dos decimales
+● Orden de impresión ​:​ Descendente por cantidad de árboles y luego alfabético por nombre de barrio. 
+```
+Ejemplo de salida para :argentina: :
+```
+BARRIO;ARBOLES_POR_HABITANTE
+9;0.24
+10;0.20
+11;0.20
+15;0.16
+12;0.11
+...
+```
+Ejemplo de salida para :canada: :
+```
+BARRIO;ARBOLES_POR_HABITANTE
+SHAUGHNESSY;0.92
+KERRISDALE;0.53
+SOUTH CAMBIE;0.51
+DUNBAR-SOUTHLANDS;0.50
+WEST POINT GREY;0.43
+...
+```
 
 ### Diámetro promedio por especie de árbol (query3.csv)
-
-Cada línea de la salida contiene, separados por “;” el nombre de la especie del árbol y el promedio del diámetro del árbol a la altura del pecho de esa especie.
-El orden de impresión es descendente por diámetro y luego alfabético por nombre de la especie.
-El promedio del diámetro del árbol a la altura del pecho se imprime truncado a dos decimales.
+```
+❖ Fromato de salida: ​NOMBRE CIENTIFICO DEL ARBOL;PROMEDIO DEL DIAMETRO A LA ALTURA DEL PECHO DE ESA ESPECIE
+  → PROMEDIO DEL DIAMETRO A LA ALTURA DEL PECHO DE ESA ESPECIE se imprime truncado a dos decimales
+● Orden de impresión ​:​ Descendente por diámetro y luego alfabético por nombre de la especie. 
+```
+Ejemplo de salida para :argentina: :
+```
+NOMBRE_CIENTIFICO;PROMEDIO_DIAMETRO
+Sterculia coccinea;75.20
+Eucalyptus tereticornis;71.12
+Tristania conferta;70.39
+Salix alba;66.51
+Caryota urens;65.42
+...
+```
+Ejemplo de salida para :canada: :
+```
+NOMBRE_CIENTIFICO;PROMEDIO_DIAMETRO
+MANCHURIAN BIRCH;36.15
+LEYLAND CYPRESS;35.53
+AMERICAN CHESTNUT;32.11
+GRAY POPLAR;32.10
+JAPANESE WALNUT;29.19
+...
+```
 
 ## Creación de los ejecutables
 
